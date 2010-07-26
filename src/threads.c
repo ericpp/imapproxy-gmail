@@ -1,46 +1,34 @@
 /*
-** 
-**               Copyright (c) 2002-2007 Dave McMurtrie
 **
-** This file is part of imapproxy.
+** Copyright (c) 2010-     The SquirrelMail Project Team
+** Copyright (c) 2002-2010 Dave McMurtrie
 **
-** imapproxy is free software; you can redistribute it and/or modify
-** it under the terms of the GNU General Public License as published by
-** the Free Software Foundation; either version 2 of the License, or
-** (at your option) any later version.
+** Licensed under the GNU GPL. For full terms see the file COPYING.
 **
-** imapproxy is distributed in the hope that it will be useful,
-** but WITHOUT ANY WARRANTY; without even the implied warranty of
-** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-** GNU General Public License for more details.
-**
-** You should have received a copy of the GNU General Public License
-** along with imapproxy; if not, write to the Free Software
-** Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-**
+** This file is part of SquirrelMail IMAP Proxy.
 **
 **  Facility:
 **
-**    threads.c
+**      threads.c
 **
 **  Abstract:
 **
-**    Routines to provide threadsafe interaction with OpenSSL libraries.
+**      Routines to provide threadsafe interaction with OpenSSL libraries.
 **
 **  Authors:
 **
-**    Jan Grant, based on http://www.openssl.org/docs/crypto/threads.html
+**      Dave McMurtrie <davemcmurtrie@hotmail.com>
 **
-**  RCS:
+**  Version:
 **
-**    $Source: /afs/andrew.cmu.edu/usr18/dave64/work/IMAP_Proxy/src/RCS/threads.c,v $
-**    $Id: threads.c,v 1.2 2007/05/31 11:58:17 dave64 Exp $
+**      $Id$
 **
 **  Modification History:
 **
-**    $Log: threads.c,v $
-**    Revision 1.2  2007/05/31 11:58:17  dave64
-**    Added license information and updated comment block.
+**      $Log$
+**
+**      Revision 1.2  2007/05/31 11:58:17  dave64
+**      Added license information and updated comment block.
 **
 **
 */

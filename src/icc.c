@@ -1,23 +1,11 @@
 /*
-** 
-**               Copyright (c) 2002,2003 Dave McMurtrie
 **
-** This file is part of imapproxy.
+** Copyright (c) 2010-     The SquirrelMail Project Team
+** Copyright (c) 2002-2010 Dave McMurtrie
 **
-** imapproxy is free software; you can redistribute it and/or modify
-** it under the terms of the GNU General Public License as published by
-** the Free Software Foundation; either version 2 of the License, or
-** (at your option) any later version.
+** Licensed under the GNU GPL. For full terms see the file COPYING.
 **
-** imapproxy is distributed in the hope that it will be useful,
-** but WITHOUT ANY WARRANTY; without even the implied warranty of
-** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-** GNU General Public License for more details.
-**
-** You should have received a copy of the GNU General Public License
-** along with imapproxy; if not, write to the Free Software
-** Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-**
+** This file is part of SquirrelMail IMAP Proxy.
 **
 **  Facility:
 **
@@ -29,16 +17,16 @@
 **
 **  Authors:
 **
-**	Author: Dave McMurtrie <davemcmurtrie@hotmail.com>
+**      Dave McMurtrie <davemcmurtrie@hotmail.com>
 **
-**  RCS:
+**  Version:
 **
-**	$Source: /afs/pitt.edu/usr12/dgm/work/IMAP_Proxy/src/RCS/icc.c,v $
-**	$Id: icc.c,v 1.8 2005/06/15 12:02:08 dgm Exp $
-**      
+**      $Id$
+**
 **  Modification History:
 **
-**	$Log: icc.c,v $
+**      $Log$
+**
 **	Revision 1.8  2005/06/15 12:02:08  dgm
 **	Include config.h.
 **
@@ -63,7 +51,6 @@
 **
 **	Revision 1.1  2002/07/03 12:06:58  dgm
 **	Initial revision
-**
 **
 */
 
@@ -147,7 +134,7 @@ static void _ICC_Recycle( unsigned int Expiration )
 		   Expiration ) )
 	    {
 		syslog(LOG_INFO, "Expiring server sd [%d]", HashEntry->server_conn->sd);
-		/* Logout of the imap server and close the server socket. */
+		/* Logout of the IMAP server and close the server socket. */
 
 		IMAP_Write( HashEntry->server_conn, "VIC20 LOGOUT\r\n",
 			    strlen( "VIC20 LOGOUT\r\n" ) );

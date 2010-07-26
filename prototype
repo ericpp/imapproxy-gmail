@@ -8,9 +8,9 @@ l none /etc/rc2.d/K10imapproxy=/etc/init.d/imapproxy
 l none /etc/rc3.d/S99imapproxy=/etc/init.d/imapproxy
 l none /etc/rcS.d/K10imapproxy=/etc/init.d/imapproxy
 d none doc 0755 root sys
-d none doc/up-imapproxy 0755 root sys
-f none doc/up-imapproxy/ChangeLog=ChangeLog 0644 root sys
-f none doc/up-imapproxy/README=README 0644 root sys
+d none doc/squirrelmail-imapproxy 0755 root sys
+f none doc/squirrelmail-imapproxy/ChangeLog=ChangeLog 0644 root sys
+f none doc/squirrelmail-imapproxy/README=README 0644 root sys
 d none sbin 0755 root sys
 f none sbin/in.imapproxyd=bin/in.imapproxyd 0755 root sys
 f none sbin/pimpstat=bin/pimpstat 0755 root sys

@@ -1,23 +1,11 @@
 /*
-** 
-**               Copyright (c) 2002,2003 Dave McMurtrie
 **
-** This file is part of imapproxy.
+** Copyright (c) 2010-     The SquirrelMail Project Team
+** Copyright (c) 2002-2010 Dave McMurtrie
 **
-** imapproxy is free software; you can redistribute it and/or modify
-** it under the terms of the GNU General Public License as published by
-** the Free Software Foundation; either version 2 of the License, or
-** (at your option) any later version.
+** Licensed under the GNU GPL. For full terms see the file COPYING.
 **
-** imapproxy is distributed in the hope that it will be useful,
-** but WITHOUT ANY WARRANTY; without even the implied warranty of
-** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-** GNU General Public License for more details.
-**
-** You should have received a copy of the GNU General Public License
-** along with imapproxy; if not, write to the Free Software
-** Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-**
+** This file is part of SquirrelMail IMAP Proxy.
 **
 **  Facility:
 **
@@ -25,20 +13,20 @@
 **
 **  Abstract:
 **
-**	Common definitions and function prototypes for the imap proxy server.
+**	Common definitions and function prototypes for the IMAP proxy server.
 **
 **  Authors:
 **
 **      Dave McMurtrie <davemcmurtrie@hotmail.com>
 **
-**  RCS:
+**  Version:
 **
-**      $Source: /afs/andrew.cmu.edu/usr18/dave64/work/IMAP_Proxy/include/RCS/imapproxy.h,v $
-**      $Id: imapproxy.h,v 1.30 2009/10/16 14:35:17 dave64 Exp $
-**      
+**      $Id$
+**
 **  Modification History:
 **
-**      $Log: imapproxy.h,v $
+**      $Log$
+**
 **      Revision 1.30  2009/10/16 14:35:17  dave64
 **      Applied patch by Jose Luis Tallon to improve server connect retry logic.
 **
@@ -145,7 +133,6 @@
 **
 **      Revision 1.1  2002/07/03 11:21:12  dgm
 **      Initial revision
-**
 **
 */
 
@@ -281,7 +268,7 @@ struct IMAPConnectionContext
  * One ProxyConfig structure will be used globally to keep track of
  * configurable options.  All of these options are set by reading values
  * from the global config file except for support_unselect.  That's set
- * based on the CAPABILITY string from the real imap server.
+ * based on the CAPABILITY string from the real IMAP server.
  */
 struct ProxyConfig
 {

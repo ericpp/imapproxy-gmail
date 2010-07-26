@@ -1,23 +1,11 @@
 /*
-** 
-**               Copyright (c) 2002,2003 Dave McMurtrie
 **
-** This file is part of imapproxy.
+** Copyright (c) 2010-     The SquirrelMail Project Team
+** Copyright (c) 2002-2010 Dave McMurtrie
 **
-** imapproxy is free software; you can redistribute it and/or modify
-** it under the terms of the GNU General Public License as published by
-** the Free Software Foundation; either version 2 of the License, or
-** (at your option) any later version.
+** Licensed under the GNU GPL. For full terms see the file COPYING.
 **
-** imapproxy is distributed in the hope that it will be useful,
-** but WITHOUT ANY WARRANTY; without even the implied warranty of
-** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-** GNU General Public License for more details.
-**
-** You should have received a copy of the GNU General Public License
-** along with imapproxy; if not, write to the Free Software
-** Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-**
+** This file is part of SquirrelMail IMAP Proxy.
 **
 **  Facility:
 **
@@ -31,16 +19,16 @@
 **
 **  Authors:
 **
-**	Dave McMurtrie <davemcmurtrie@hotmail.com>
+**      Dave McMurtrie <davemcmurtrie@hotmail.com>
 **
-**  RCS:
+**  Version:
 **
-**	$Source: /afs/andrew.cmu.edu/usr18/dave64/work/IMAP_Proxy/src/RCS/main.c,v $
-**	$Id: main.c,v 1.40 2009/10/16 14:34:16 dave64 Exp $
-**      
+**      $Id$
+**
 **  Modification History:
 **
-**      $Log: main.c,v $
+**      $Log$
+**
 **      Revision 1.40  2009/10/16 14:34:16  dave64
 **      Applied patch by Jose Luis Tallon to improve server connect retry logic.
 **
@@ -196,13 +184,12 @@
 **	Revision 1.1  2002/07/03 12:07:51  dgm
 **	Initial revision
 **
-**
 */
 
 
-static char *rcsId = "$Id: main.c,v 1.40 2009/10/16 14:34:16 dave64 Exp $";
-static char *rcsSource = "$Source: /afs/andrew.cmu.edu/usr18/dave64/work/IMAP_Proxy/src/RCS/main.c,v $";
-static char *rcsAuthor = "$Author: dave64 $";
+static char *sourceRevision = "$Revision$";
+static char *sourceVersion = "$Id$";
+static char *sourceAuthor = "$Author$";
 
 #define _REENTRANT
 
@@ -246,17 +233,17 @@ static char *rcsAuthor = "$Author: dave64 $";
 /*
  * Global variables.  Many of these things are global just as an optimization.
  * For example, there's no reason to have to do a hostname lookup every
- * single time we want to connect to the imap server.  We do it once and 
+ * single time we want to connect to the IMAP server.  We do it once and 
  * store it globally.
  */
 char Banner[BUFSIZE];                /* banner line returned from IMAP svr */
 unsigned int BannerLen;
 char Capability[BUFSIZE];            /* IMAP capability line from server */
 unsigned int CapabilityLen;
-ISD_Struct ISD;                      /* global imap server descriptor */
+ISD_Struct ISD;                      /* global IMAP server descriptor */
 ICC_Struct *ICC_free;                /* ICC free listhead */
 ICC_Struct *ICC_HashTable[ HASH_TABLE_SIZE ];
-IMAPCounter_Struct *IMAPCount;       /* global imap counter struct */
+IMAPCounter_Struct *IMAPCount;       /* global IMAP counter struct */
 pthread_mutex_t mp;                  /* "main" mutex used for ICC sync */
 pthread_mutex_t trace;               /* mutex used for username tracing */
 char TraceUser[MAXUSERNAMELEN];      /* username we want to trace */
@@ -800,7 +787,7 @@ static void ServerInit( void )
     }
     
     
-    /* grab a host entry for the imap server. */
+    /* grab a host entry for the IMAP server. */
     syslog( LOG_INFO, "%s: proxying to IMAP server '%s'.", fn, 
 	    PC_Struct.server_hostname );
     
@@ -1216,7 +1203,7 @@ static void SetBannerAndCapability( void )
 	
 	if ( connect( sd, (struct sockaddr *)ISD.srv->ai_addr, 
 		      ISD.srv->ai_addrlen ) == -1 ) 	{
-	    syslog(LOG_ERR, "%s: connect() to imap server on socket [%d] failed: %s -- retrying", fn, sd, strerror(errno));
+	    syslog(LOG_ERR, "%s: connect() to IMAP server on socket [%d] failed: %s -- retrying", fn, sd, strerror(errno));
 	    close( sd );
 	    
 	    sleep( 15 );    /* IMAP server may not be started yet. */
@@ -1260,7 +1247,7 @@ static void SetBannerAndCapability( void )
      */
     if ( strncasecmp( Banner, IMAP_UNTAGGED_OK, strlen(IMAP_UNTAGGED_OK)) )
     {
-	syslog(LOG_ERR, "%s: Unexpected response from imap server on initial connection: %s -- Exiting.", fn, Banner);
+	syslog(LOG_ERR, "%s: Unexpected response from IMAP server on initial connection: %s -- Exiting.", fn, Banner);
 	close( itd.conn->sd );
 	exit( 1 );
     }
@@ -1321,7 +1308,7 @@ static void SetBannerAndCapability( void )
     
     if ( strncasecmp( itd.ReadBuf, IMAP_TAGGED_OK, strlen(IMAP_TAGGED_OK) ) )
     {
-	syslog(LOG_ERR, "%s: Received non-OK tagged reponse from imap server on CAPABILITY command -- exiting.", fn );
+	syslog(LOG_ERR, "%s: Received non-OK tagged reponse from IMAP server on CAPABILITY command -- exiting.", fn );
 	close( itd.conn->sd );
 	exit( 1 );
     }

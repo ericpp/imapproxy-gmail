@@ -1,10 +1,9 @@
-PKG=UPimapproxy
-NAME=up-imapproxy
+PKG=imapproxy
+NAME=SquirrelMail IMAP Proxy
 ARCH=sparc
 VERSION=1.2.7
 CATEGORY=application
-VENDOR=www.imapproxy.org
-DESC=This is a connection caching imapproxy daemon for proxied imap connections
-EMAIL=davemcmurtrie@gmail.com
+VENDOR=imapproxy.org
+DESC=This is a connection caching IMAP proxy daemon for proxied IMAP connections
 BASEDIR=/usr/local
 CLASSES=none

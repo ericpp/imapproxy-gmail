@@ -1,4 +1,4 @@
-#### Makefile for IMAP proxy
+#### Makefile for SquirrelMail IMAP Proxy
 #### Contributed by Gary Mills <mills@cc.UManitoba.CA>
 
 # Fixed to work with configure script

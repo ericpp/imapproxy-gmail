@@ -1,14 +1,15 @@
-                 Copyright (c) 2002,2003 Dave McMurtrie
+     Copyright (c) 2010-     The SquirrelMail Project Team
+     Copyright (c) 2002-2010 Dave McMurtrie
 
 
-This directory contains the source distribution of up-imapproxy.
+This directory contains the source distribution of SquirrelMail IMAP Proxy.
 
-If you find any bugs in up-imapproxy, please subscribe to the imapproxy-info
-mailing list and post your bug there.
+If you find any bugs in squirrelmail-imapproxy, please subscribe to the
+squirrelmail-imapproxy mailing list and post your bug there.
 
-If you want to subscribe to the imapproxy-info mailing list, visit:
+If you want to subscribe to the squirrelmail-imapproxy mailing list, visit:
 
-http://lists.andrew.cmu.edu/mailman/listinfo/imapproxy-info
+https://lists.sourceforge.net/lists/listinfo/squirrelmail-imapproxy
 
 For some Debian specific issues that have come up, read the file README.debian.
 
@@ -69,7 +70,7 @@ CONFIGURATION OPTIONS
 
 server_hostname
 ---------------
-This determines which imap server you want to proxy connections to.
+This determines which IMAP server you want to proxy connections to.
 
 cache_size
 ----------
@@ -215,7 +216,7 @@ ADDITIONAL COMMANDS:
 
 There are a few additional commands that have been added to allow you to
 administer the proxy server.  They're implemented through the same mechanism
-as regular imap protocol commands, so they require you to telnet to your
+as regular IMAP protocol commands, so they require you to telnet to your
 proxy server on whatever port you choose to bind to and type them like a
 regular protocol transaction.  At our site, we've severely limited access to
 the proxy port such that only our webmail machines and one internal admin
@@ -326,20 +327,5 @@ S: a001 OK Completed
 
 Happy proxying,
 
-Dave  <davemcmurtrie@gmail.com>
+The SquirrelMail Project Team
 
-
-                              _________
-                             /        |
-                            /         |
-                           /    ______|
-                          /    /       ________
-                         |    |        |      /
-                         |    |        |_____/
-                         |    |        ______
-                         |    |        |     \
-                         |    |        |______\
-                          \    \_______
-                           \           |
-                            \          |
-                             \_________|

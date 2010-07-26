@@ -1,0 +1,72 @@
+#!/bin/sh
+##
+## Copyright (c) 2010-     The SquirrelMail Project Team
+## Copyright (c) 2002-2010 Dave McMurtrie
+##
+## Licensed under the GNU GPL. For full terms see the file COPYING.
+##
+## This file is part of SquirrelMail IMAP Proxy.
+##
+##  Facility:
+##
+##	rc.pimpdaddy
+##
+##  Abstract:
+##
+##	pimpdaddy startup script
+##
+##  Authors:
+##
+##      Dave McMurtrie <davemcmurtrie@hotmail.com>
+##
+##  Version:
+##
+##      $Id$
+##
+##  Modification History:
+##
+##      $Log$
+##
+##      Revision 1.1  2002/09/06 18:41:20  dgm
+##      Initial revision
+##
+
+Pgm=`/bin/basename $0`
+
+
+case $1 in
+
+    'start')
+
+	# make sure the executable exists.
+
+	if [ ! -f /usr/local/sbin/pimpdaddy ]; then
+	    /bin/echo "$Pgm: /usr/local/sbin/pimpdaddy does not exist.  Not starting pimpdaddy." 1>&2
+	    exit 1
+	fi
+
+	/bin/echo "$Pgm: Starting pimpdaddy." 1>&2
+
+	/usr/local/sbin/pimpdaddy &
+
+	;;
+
+
+
+    'stop')
+
+	/bin/echo "$Pgm: Shutting down pimpdaddy." 1>&2
+
+	pkill -x pimpdaddy
+
+	;;
+
+
+    *)
+	/bin/echo "usage: $Pgm {start|stop}" 1>&2
+
+	exit 0
+
+	;;
+
+esac

@@ -1,23 +1,11 @@
 /*
-** 
-**               Copyright (c) 2002,2003 Dave McMurtrie
 **
-** This file is part of imapproxy.
+** Copyright (c) 2010-     The SquirrelMail Project Team
+** Copyright (c) 2002-2010 Dave McMurtrie
 **
-** imapproxy is free software; you can redistribute it and/or modify
-** it under the terms of the GNU General Public License as published by
-** the Free Software Foundation; either version 2 of the License, or
-** (at your option) any later version.
+** Licensed under the GNU GPL. For full terms see the file COPYING.
 **
-** imapproxy is distributed in the hope that it will be useful,
-** but WITHOUT ANY WARRANTY; without even the implied warranty of
-** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-** GNU General Public License for more details.
-**
-** You should have received a copy of the GNU General Public License
-** along with imapproxy; if not, write to the Free Software
-** Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-**
+** This file is part of SquirrelMail IMAP Proxy.
 **
 **  Facility:
 **
@@ -32,14 +20,14 @@
 **
 **      Dave McMurtrie <davemcmurtrie@hotmail.com>
 **
-**  RCS:
+**  Version:
 **
-**      $Source: /afs/pitt.edu/usr12/dgm/work/IMAP_Proxy/src/RCS/becomenonroot.c,v $
-**      $Id: becomenonroot.c,v 1.4 2005/06/15 12:10:12 dgm Exp $
-**      
+**      $Id$
+**
 **  Modification History:
 **
-**      $Log: becomenonroot.c,v $
+**      $Log$
+**
 **      Revision 1.4  2005/06/15 12:10:12  dgm
 **      Conditionally include unistd.h.  Include config.h.  Patch
 **      by Jarno Huuskonen to drop any supplemental group memberships.
@@ -53,7 +41,6 @@
 **
 **      Revision 1.1  2002/08/29 16:24:31  dgm
 **      Initial revision
-**
 **
 */
 

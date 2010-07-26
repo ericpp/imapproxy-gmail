@@ -10,23 +10,24 @@
 # with_krb5 indicates the Kerberos includes are needed (ie: Red Hat Linux 9)
 %{?with_krb5:%define withkrb5 1}
 
-Summary:	Imapproxy Daemon
-Name:		up-imapproxy
+Summary:	IMAP Proxy Daemon
+Name:		SquirrelMail IMAP Proxy
 Version:	%ver
 Release:	%rel
+#Copyright:	The SquirrelMail Project Team
 #Copyright:	Dave McMurtrie
 License:        GPL
 Group:		Networking/Daemons
-Source0:	http://www.imapproxy.org/downloads/up-imapproxy-%{ver}.tar.gz
+Source0:	http://squirrelmail.org/download.php
 #Source1:	imapproxy.conf
 #Source2:	imapproxy.init
-Url:		http://www.imapproxy.org
+Url:		http://imapproxy.org
 Packager:	Devrim SERAL <devrim@gazi.edu.tr>
 #BuildRoot:	/var/tmp/imapproxy-%{ver}-root
 BuildRoot:	%{_tmppath}/%{name}-%{ver}-root
 
 %description
-This is a connection caching imapproxy daemon for proxied imap connections
+This is a connection caching IMAP proxy daemon for proxied IMAP connections
 
 %prep
 %setup 

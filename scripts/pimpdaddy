@@ -1,0 +1,237 @@
+#!/usr/bin/perl
+##
+## Copyright (c) 2010-     The SquirrelMail Project Team
+## Copyright (c) 2002-2010 Dave McMurtrie
+##
+## Licensed under the GNU GPL. For full terms see the file COPYING.
+##
+## This file is part of SquirrelMail IMAP Proxy.
+##
+##  Facility:
+##
+##      pimpdaddy
+##	IMAP Proxy "daddy" process
+##
+##  Abstract:
+##
+##	To monitor the IMAP Proxy daemon and restart it if it dies or
+##	hangs.
+##
+##  Authors:
+##
+##      Dave McMurtrie <davemcmurtrie@hotmail.com>
+##
+##  Version:
+##
+##      $Id$
+##
+##  Modification History:
+##
+##      $Log$
+##
+##      Revision 1.1  2002/09/06 18:41:08  dgm
+##      Initial revision
+##
+
+use strict;
+use Socket;
+
+my $Pgm = (reverse(split(/\//, $0)))[0];
+my $addr = "localhost";
+my $port = 143;
+my $ipaddr = inet_aton( $addr );
+my $paddr = sockaddr_in( $port, $ipaddr );
+my $protocol = getprotobyname( 'tcp' );
+my $console = "/dev/console";
+
+
+#
+## Function definitions
+#
+
+#++
+# Function:	Fatal
+#
+# Purpose:	echo fatal error messages to the console and die.
+#
+# Parameters:	scalar -- the message to echo 
+#
+# Returns:	nada, it exits.
+#
+# Authors:	dgm
+#
+# Notes:
+#--
+sub Fatal($)
+{
+    my $Message = shift @_;
+    chomp $Message;
+
+    open( ERR, ">$console" );
+    print( ERR "$Pgm: FATAL: $Message\n ");
+    exit( 1 );
+}
+
+
+
+#++
+# Function:	Alert
+#
+# Purpose:	echo alert messages to the console.
+#
+# Parameters:	scalar -- the message to echo 
+#
+# Returns:	nada.
+#
+# Authors:	dgm
+#
+# Notes:
+#--
+sub Alert($)
+{
+    my $Message = shift @_;
+    chomp $Message;
+
+    open( ERR, ">$console" );
+    print( ERR "$Pgm: ALERT: $Message\n ");
+    close( ERR );
+}
+
+
+#++
+# Function:	Restart
+#
+# Purpose:	restart the IMAP proxy server
+#
+# Parameters:	nada. 
+#
+# Returns:	nada.
+#
+# Authors:	dgm
+#
+# Notes:
+#--
+sub Restart()
+{
+    system( "/etc/init.d/imapproxy", "stop" );
+    sleep( 3 );
+    system( "/etc/init.d/imapproxy", "start" );
+    sleep( 10 );
+}
+
+
+#
+## Start of main script.
+#
+
+# When we first start, sleep for a while since we don't know for sure
+# what order we might get started in.  We don't want to fight with
+# the imapproxy startup script.
+sleep( 30 );
+
+$SIG{ALRM} = sub{ die "timeout" };
+
+
+#
+## Loop infinitely and make sure we can connect
+## to the IMAP proxy server.
+#
+for ( ;; )
+{
+    unless( socket( SOCK, PF_INET, SOCK_STREAM, $protocol ) )
+    {
+	Fatal("socket() failed: $!");
+    }
+
+    #
+    ## Turn off I/O buffering for the socket filehandle.
+    #
+    select((select(SOCK), $| = 1)[0]);
+
+
+    unless( connect( SOCK, $paddr ) )
+    {
+	Alert( "Failed to connect to the IMAP proxy server: $! -- Restarting IMAP proxy server.");
+	close( SOCK );
+
+	Restart();
+
+	next;
+    }
+
+    #
+    ## we're connected.  Try to read the banner line, but make sure we will
+    ## time out eventually if the server happens to be hung.  We can't just
+    ## set an alarm because perl uses alarms internally, so we have to use
+    ## this eval/die hokum...
+    #
+    eval
+    {
+	alarm( 60 );
+	$_ = ( <SOCK> );
+	alarm( 0 );
+    };
+
+    if ( $@ )
+    {
+	if ( $@ =~ /timeout/ )
+	{
+	    Alert( "read() timed out.  Restarting the IMAP proxy server." );
+	    close( SOCK );
+	    Restart();
+	    next;
+	}
+	else
+	{
+	    alarm(0);
+	    die;
+	}
+    }
+
+
+    unless ( /^\* OK / )
+    {
+	Alert( "Did not receive OK login banner from IMAP proxy server -- Restarting IMAP proxy server." );
+	close( SOCK );
+	Restart();
+	next;
+    }
+    
+    print( SOCK "1 LOGOUT\r\n" );
+
+    # eat the login response.
+    eval
+    {
+	alarm( 60 );
+	$_ = ( <SOCK> );
+	alarm( 0 );
+    };
+
+    if ( $@ )
+    {
+	if ( $@ =~ /timeout/ )
+	{
+	    Alert( "read() timed out.  Restarting the IMAP proxy server." );
+	    close( SOCK );
+	    Restart();
+	    next;
+	}
+	else
+	{
+	    alarm(0);
+	    die;
+	}
+    }
+
+    close( SOCK );
+
+    sleep( 5 );
+
+}
+    
+
+
+
+
+
+

@@ -1,17 +1,17 @@
 Michael Faurot <mfaurot at atww.org> submitted some helpful information
-for people building and installing up-imapproxy on Debian Linux systems.
-I've included his information here, exactly as he submitted it.
+for people building and installing squirrelmail-imapproxy on Debian Linux
+systems.  I've included his information here, exactly as he submitted it.
 
-It's now worth noting that there's an official Debian package for up-imapproxy
-(courtesy of Jose Luis Tallon) so you might want to save yourself some time 
-and effort and just apt-get that.
+It's now worth noting that there's an official Debian package for
+squirrelmail-imapproxy (courtesy of Jose Luis Tallon) so you might
+want to save yourself some time and effort and just apt-get that.
 
 
 o)	On a Debian system that uses UW IMAP you'll need to rename
 	/etc/rc2.d/S99rmnologin to something like S98rmnologin.  Then be
 	sure the rc script for imapproxy is run as S99imapproxy.
 	This insures that when imapproxy goes to query the imap
-	daemon, the imap daemon will actually say it's ready.  UW IMAP
+	daemon, the IMAP daemon will actually say it's ready.  UW IMAP
 	respects the /etc/nologin file, and if imapproxy queries while
 	/etc/nologin is still present, imapproxy will fail to start.
 	Debian creates /etc/nologin during the early stages of bootup,

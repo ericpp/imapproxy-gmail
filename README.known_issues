@@ -1,7 +1,7 @@
 README was starting to become too cluttered, so I split out a few known
 issues that you may encounter and stuck them in this file.  If you already
-built up-imapproxy and didn't encounter any problems, you probably don't
-need to read any further.
+built squirrelmail-imapproxy and didn't encounter any problems, you probably
+don't need to read any further.
 
 -------------------------------------------------------------------------------
 Problem: configure cannot find the openssl libraries.
@@ -74,5 +74,5 @@ Problem: Attempting to build rpm on RedHat 9 or RedHat Enterprise Linux 3 fails
 
 Symptom:  
 
-Fix:     rpmbuild -tb up-imapproxy-1.2.3.tar.gz --define 'with_krb5 1'
+Fix:     rpmbuild -tb squirrelmail-imapproxy-1.2.3.tar.gz --define 'with_krb5 1'
 -------------------------------------------------------------------------------

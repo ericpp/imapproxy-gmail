@@ -1,23 +1,11 @@
 /*
-** 
-**               Copyright (c) 2002-2004 Dave McMurtrie
 **
-** This file is part of imapproxy.
+** Copyright (c) 2010-     The SquirrelMail Project Team
+** Copyright (c) 2002-2010 Dave McMurtrie
 **
-** imapproxy is free software; you can redistribute it and/or modify
-** it under the terms of the GNU General Public License as published by
-** the Free Software Foundation; either version 2 of the License, or
-** (at your option) any later version.
+** Licensed under the GNU GPL. For full terms see the file COPYING.
 **
-** imapproxy is distributed in the hope that it will be useful,
-** but WITHOUT ANY WARRANTY; without even the implied warranty of
-** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-** GNU General Public License for more details.
-**
-** You should have received a copy of the GNU General Public License
-** along with imapproxy; if not, write to the Free Software
-** Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-**
+** This file is part of SquirrelMail IMAP Proxy.
 **
 **  Facility:
 **
@@ -29,16 +17,16 @@
 **
 **  Authors:
 **
-**	Dave McMurtrie <davemcmurtrie@hotmail.com>
+**      Dave McMurtrie <davemcmurtrie@hotmail.com>
 **
-**  RCS:
+**  Version:
 **
-**      $Source: /afs/andrew.cmu.edu/usr18/dave64/work/IMAP_Proxy/src/RCS/select.c,v $
-**      $Id: select.c,v 1.5 2009/10/16 14:22:38 dave64 Exp $
-**      
+**      $Id$
+**
 **  Modification History:
-**  
-**      $Log: select.c,v $
+**
+**      $Log$
+**
 **      Revision 1.5  2009/10/16 14:22:38  dave64
 **      Applied patch by Jose Luis Tallon to fix broken syslog call
 **
@@ -55,8 +43,6 @@
 **
 **      Revision 1.1  2004/02/24 15:13:21  dgm
 **      Initial revision
-**
-**
 **
 */
 
@@ -90,11 +76,11 @@ static int Populate_Select_Cache( ITD_Struct *, ISC_Struct *, char *, char *, un
  * Function:     Handle_Select_Command
  *
  * Purpose:      The client sent a SELECT command.  Either hit the cache,
- *               or get data from the imap server.
+ *               or get data from the IMAP server.
  *
  * Parameters:   ptr to ITD -- client transaction descriptor
  *               ptr to ITD -- server transaction descriptor
- *               ptr to ISC -- imap select cache structure
+ *               ptr to ISC -- IMAP select cache structure
  *               ptr to char -- The select command string from the client.
  *               unsigned int -- the length of the select command
  *
@@ -265,7 +251,7 @@ extern int Handle_Select_Command( ITD_Struct *Client,
  * Purpose:      Send cached SELECT server response data back to a client.
  *
  * Parameters:   ptr to ITD -- client transaction descriptor
- *               ptr to ISC -- imap select cache structure
+ *               ptr to ISC -- IMAP select cache structure
  *               ptr to char -- client tag for response
  *
  * Returns:      0 on success
@@ -342,7 +328,7 @@ static int Populate_Select_Cache( ITD_Struct *Server,
     
     if ( rc == -1 )
     {
-	syslog( LOG_ERR, "%s: Unable to send SELECT command to imap server so can't populate cache.", fn );
+	syslog( LOG_ERR, "%s: Unable to send SELECT command to IMAP server so can't populate cache.", fn );
 	return( -1 );
     }
 
@@ -369,7 +355,7 @@ static int Populate_Select_Cache( ITD_Struct *Server,
 	
 	if ( ( rc == -1 ) || ( rc == 0 ) )
 	{
-	    syslog( LOG_WARNING, "%s: Unable to read SELECT response from imap server so can't populate cache.", fn );
+	    syslog( LOG_WARNING, "%s: Unable to read SELECT response from IMAP server so can't populate cache.", fn );
 	    return( -1 );
 	}
 	
@@ -510,7 +496,7 @@ extern unsigned int Is_Safe_Command( char *Command )
  *
  * Purpose:      Reset the cache time so the entry will not be valid
  *
- * Parameters:   ptr to ISC -- imap select cache structure
+ * Parameters:   ptr to ISC -- IMAP select cache structure
  *
  * Returns:      nothing
  *

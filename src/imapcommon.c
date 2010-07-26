@@ -1,23 +1,11 @@
 /*
-** 
-**               Copyright (c) 2002,2003 Dave McMurtrie
 **
-** This file is part of imapproxy.
+** Copyright (c) 2010-     The SquirrelMail Project Team
+** Copyright (c) 2002-2010 Dave McMurtrie
 **
-** imapproxy is free software; you can redistribute it and/or modify
-** it under the terms of the GNU General Public License as published by
-** the Free Software Foundation; either version 2 of the License, or
-** (at your option) any later version.
+** Licensed under the GNU GPL. For full terms see the file COPYING.
 **
-** imapproxy is distributed in the hope that it will be useful,
-** but WITHOUT ANY WARRANTY; without even the implied warranty of
-** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-** GNU General Public License for more details.
-**
-** You should have received a copy of the GNU General Public License
-** along with imapproxy; if not, write to the Free Software
-** Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-**
+** This file is part of SquirrelMail IMAP Proxy.
 **
 **  Facility:
 **
@@ -30,16 +18,16 @@
 **
 **  Authors:
 **
-**	Dave McMurtrie <davemcmurtrie@hotmail.com>
+**      Dave McMurtrie <davemcmurtrie@hotmail.com>
 **
-**  RCS:
+**  Version:
 **
-**	$Source: /afs/andrew.cmu.edu/usr18/dave64/work/IMAP_Proxy/src/RCS/imapcommon.c,v $
-**	$Id: imapcommon.c,v 1.25 2008/10/20 13:23:04 dave64 Exp $
-**      
+**      $Id$
+**
 **  Modification History:
 **
-**	$Log: imapcommon.c,v $
+**      $Log$
+**
 **	Revision 1.25  2008/10/20 13:23:04  dave64
 **	Applied patch by Michael M. Slusarz to support XPROXYREUSE.
 **
@@ -132,7 +120,6 @@
 **
 **	Revision 1.1  2002/07/03 12:07:26  dgm
 **	Initial revision
-**
 **
 */
 
@@ -1250,7 +1237,7 @@ extern int IMAP_Literal_Read( ITD_Struct *ITD )
 /*++
  * Function:	IMAP_Line_Read
  *
- * Purpose:	Line-oriented buffered reads from the imap server
+ * Purpose:	Line-oriented buffered reads from the IMAP server
  *
  * Parameters:	ptr to a IMAPTransactionDescriptor structure
  *

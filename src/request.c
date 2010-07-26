@@ -1,23 +1,11 @@
 /*
-** 
-**               Copyright (c) 2002,2003 Dave McMurtrie
 **
-** This file is part of imapproxy.
+** Copyright (c) 2010-     The SquirrelMail Project Team
+** Copyright (c) 2002-2010 Dave McMurtrie
 **
-** imapproxy is free software; you can redistribute it and/or modify
-** it under the terms of the GNU General Public License as published by
-** the Free Software Foundation; either version 2 of the License, or
-** (at your option) any later version.
+** Licensed under the GNU GPL. For full terms see the file COPYING.
 **
-** imapproxy is distributed in the hope that it will be useful,
-** but WITHOUT ANY WARRANTY; without even the implied warranty of
-** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-** GNU General Public License for more details.
-**
-** You should have received a copy of the GNU General Public License
-** along with imapproxy; if not, write to the Free Software
-** Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-**
+** This file is part of SquirrelMail IMAP Proxy.
 **
 **  Facility:
 **
@@ -34,16 +22,16 @@
 **
 **  Authors:
 **
-**	Dave McMurtrie <davemcmurtrie@hotmail.com>
+**      Dave McMurtrie <davemcmurtrie@hotmail.com>
 **
-**  RCS:
+**  Version:
 **
-**	$Source: /afs/andrew.cmu.edu/usr18/dave64/work/IMAP_Proxy/src/RCS/request.c,v $
-**	$Id: request.c,v 1.25 2009/10/16 14:12:55 dave64 Exp $
-**      
+**      $Id$
+**
 **  Modification History:
 **
-**	$Log: request.c,v $
+**      $Log$
+**
 **	Revision 1.25  2009/10/16 14:12:55  dave64
 **	applied patch by Jose Luis Tallon to fix compiler warnings
 **
@@ -138,7 +126,6 @@
 **
 **	Revision 1.1  2002/07/03 12:08:34  dgm
 **	Initial revision
-**
 **
 */
 
@@ -358,7 +345,7 @@ static int cmd_resetcounters( ITD_Struct *itd, char *Tag )
 /*++
  * Function:	cmd_dumpicc
  *
- * Purpose:	Dump the contents of all imap connection context structs.
+ * Purpose:	Dump the contents of all IMAP connection context structs.
  *
  * Parameters:	ptr to ITD_Struct for client connection.
  *              char ptr to Tag sent with this command.
@@ -1519,7 +1506,7 @@ static int Raw_Proxy( ITD_Struct *Client, ITD_Struct *Server,
 /*++
  * Function:	HandleRequest
  *
- * Purpose:	Handle incoming imap requests (as a thread)
+ * Purpose:	Handle incoming IMAP requests (as a thread)
  *
  * Parameters:	int, client socket descriptor
  *
@@ -1528,7 +1515,7 @@ static int Raw_Proxy( ITD_Struct *Client, ITD_Struct *Server,
  * Authors:	Dave McMurtrie <davemcmurtrie@hotmail.com>
  *
  * Notes:	This function actually only handles unauthenticated
- *		traffic from an imap client.  As such it can only make sense
+ *		traffic from an IMAP client.  As such it can only make sense
  *		of the following IMAP commands (rfc 2060):  NOOP, CAPABILITY,
  *		AUTHENTICATE, LOGIN, and LOGOUT.  Also, it handles the
  *              commands that are internal to the proxy server such as
