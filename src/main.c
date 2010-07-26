@@ -638,7 +638,7 @@ int main( int argc, char *argv[] )
 	exit( 1 );
     }
 
-    syslog( LOG_INFO, "%s: imapproxy version %s normal server startup.", fn, IMAP_PROXY_VERSION );
+    syslog( LOG_INFO, "%s: squirrelmail-imap_proxy version %s normal server startup.", fn, IMAP_PROXY_VERSION );
 
     /*
      * Main server loop
@@ -965,8 +965,8 @@ void Daemonize( const char* pidfile )
 /*++
  * Function:	ParseBannerAndCapability
  *
- * Purpose:	Weed out stuff that imapproxy does not support from a banner
- *              line or a capability line.
+ * Purpose:	Weed out stuff that squirrelmail-imap_proxy does not
+ *              support from a banner line or a capability line.
  *
  * Parameters:	char * - Buffer for storing the cleaned up string.
  *              unsigned int - buflen
@@ -1147,7 +1147,7 @@ static int ParseBannerAndCapability( char *DestBuf,
     
     /*
      * Add a 'XIMAPPROXY' CAPABILITY response to indicate that the
-     * current connection is handled by imapproxy.
+     * current connection is handled by squirrelmail-imap_proxy.
      */
     if ( capability == 1 )
     {

@@ -4,7 +4,7 @@
 
 This directory contains the source distribution of SquirrelMail IMAP Proxy.
 
-If you find any bugs in squirrelmail-imapproxy, please subscribe to the
+If you find any bugs in squirrelmail-imap_proxy, please subscribe to the
 squirrelmail-imapproxy mailing list and post your bug there.
 
 If you want to subscribe to the squirrelmail-imapproxy mailing list, visit:
@@ -13,15 +13,16 @@ https://lists.sourceforge.net/lists/listinfo/squirrelmail-imapproxy
 
 For some Debian specific issues that have come up, read the file README.debian.
 
-To read a little bit about SSL support in imapproxy, read README.ssl.
+To read a little bit about SSL support in squirrelmail-imap_proxy, read
+README.ssl.
 
 
 ##############################################################################
 HOW TO BUILD
 ##############################################################################
 
-Before you build imapproxy, you're going to need to obtain the OpenSSL
-libraries.  Build and install them, then you're ready to move on.
+Before you build squirrelmail-imap_proxy, you're going to need to obtain
+the OpenSSL libraries.  Build and install them, then you're ready to move on.
 
 It should be pretty painless:
 
@@ -154,8 +155,9 @@ See README.ssl for more information.
 
 tls_cert_file
 -------------
-File containing the certificate presented by imapproxy to the server for
-client authentication during STARTTLS.  See README.ssl for more information.
+File containing the certificate presented by squirrelmail-imap_proxy to the
+server for client authentication during STARTTLS.  See README.ssl for more
+information.
 
 tls_key_file
 ------------
@@ -168,19 +170,19 @@ Allows SELECT data caching to be enabled or disabled.
 
 foreground_mode
 ---------------
-When enabled, this will prevent imapproxy from detaching from his parent
-process and controlling terminal.
+When enabled, this will prevent squirrelmail-imap_proxy from detaching from
+his parent process and controlling terminal.
 
 chroot_directory
 ----------------
-If this value is set to anything, it implicitly causes imapproxy to run in
-a chroot jail.
+If this value is set to anything, it implicitly causes squirrelmail-imap_proxy
+to run in a chroot jail.
 
 enable_admin_commands
 ---------------------
-The internal admin commands that imapproxy provides (p_dumpicc, p_trace,
-etc) are a security vulnerability if you do not restrict access to the
-listen_port using tcp wrappers, iptables, ipchains, ipfilter, an external
+The internal admin commands that squirrelmail-imap_proxy provides (p_dumpicc,
+p_trace, etc) are a security vulnerability if you do not restrict access to
+the listen_port using tcp wrappers, iptables, ipchains, ipfilter, an external
 firewall, or some other mechanism.  Because of this, the internal admin
 commands are disabled by default.
 
@@ -189,10 +191,10 @@ commands are disabled by default.
 NEW STATUS RESPONSE:
 ##############################################################################
 
-Upon a successful LOGIN or AUTHENTICATION, if imapproxy reused an existing
-connection an untagged IMAP response with the status response XPROXYREUSE
-will be issued.  This status response indicates to a client that any previous
-initialization does not need to be performed again.
+Upon a successful LOGIN or AUTHENTICATION, if squirrelmail-imap_proxy reused
+an existing connection an untagged IMAP response with the status response
+XPROXYREUSE will be issued.  This status response indicates to a client that
+any previous initialization does not need to be performed again.
 
 Examples:
 ---------
@@ -206,7 +208,7 @@ S: a001 OK User logged in
 
 C: a001 LOGIN user password
 S: [... untagged response(s) from remote IMAP server ...]
-S: * OK [XPROXYREUSE] IMAP connection reused by imapproxy
+S: * OK [XPROXYREUSE] IMAP connection reused by squirrelmail-imap_proxy
 S: a001 OK User logged in
 
 
@@ -316,7 +318,7 @@ Usage:
 Untagged response(s) (1 for each cached connection):
   * XPROXY_VERSION <version>
 
-  <version> = Current version number of imapproxy.
+  <version> = Current version number of squirrelmail-imap_proxy.
 
 Example:
 C: a001 XPROXY_VERSION

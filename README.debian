@@ -1,22 +1,22 @@
 Michael Faurot <mfaurot at atww.org> submitted some helpful information
-for people building and installing squirrelmail-imapproxy on Debian Linux
+for people building and installing squirrelmail-imap_proxy on Debian Linux
 systems.  I've included his information here, exactly as he submitted it.
 
 It's now worth noting that there's an official Debian package for
-squirrelmail-imapproxy (courtesy of Jose Luis Tallon) so you might
+squirrelmail-imap_proxy (courtesy of Jose Luis Tallon) so you might
 want to save yourself some time and effort and just apt-get that.
 
 
 o)	On a Debian system that uses UW IMAP you'll need to rename
 	/etc/rc2.d/S99rmnologin to something like S98rmnologin.  Then be
-	sure the rc script for imapproxy is run as S99imapproxy.
-	This insures that when imapproxy goes to query the imap
-	daemon, the IMAP daemon will actually say it's ready.  UW IMAP
-	respects the /etc/nologin file, and if imapproxy queries while
-	/etc/nologin is still present, imapproxy will fail to start.
-	Debian creates /etc/nologin during the early stages of bootup,
-	to prevent premature logins, and then removes it in the last
-	stages of going multiuser.
+	sure the rc script for squirrelmail-imap_proxy is run as
+        S99imapproxy.  This insures that when squirrelmail-imap_proxy goes
+        to query the imap daemon, the IMAP daemon will actually say it's
+        ready.  UW IMAP respects the /etc/nologin file, and if
+        squirrelmail-imap_proxy queries while /etc/nologin is still present,
+        squirrelmail-imap_proxy will fail to start.  Debian creates
+        /etc/nologin during the early stages of bootup, to prevent premature
+        logins, and then removes it in the last stages of going multiuser.
 
 
 o)	Add a PATH statement close to the top of the rc script
@@ -38,11 +38,11 @@ o)	If building against locally created OpenSSL libraries that
 		export CFLAGS LIBS
 
 
-o)	I built my installation of imapproxy  against my own locally 
-	compiled copies of OpenSSL's static libraries on a Debian stable
-	system.  It appears, from some messages that were on the
-	mailing list, that people attempting to build imapproxy using
-	the stock Debian OpenSSL libraries may not realize they also
+o)	I built my installation of squirrelmail-imap_proxy  against my own
+        locally compiled copies of OpenSSL's static libraries on a Debian
+        stable system.  It appears, from some messages that were on the
+	mailing list, that people attempting to build squirrelmail-imap_proxy
+        using the stock Debian OpenSSL libraries may not realize they also
 	need to install the development package for OpenSSL to get its
 	headers and libraries.  That can be done like this:
 

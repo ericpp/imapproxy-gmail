@@ -1,7 +1,7 @@
-First, if you're using squirrelmail-imapproxy with SSL, you have Ken
+First, if you're using squirrelmail-imap_proxy with SSL, you have Ken
 Murchison to thank for that.  He added this feature.
 
-squirrelmail-imapproxy only supports TLS between the proxy server and the
+squirrelmail-imap_proxy only supports TLS between the proxy server and the
 real IMAP server.  It does not support TLS between a client (usually webmail)
 and the proxy server.  The idea here is that you can run the IMAP proxy on
 the same machine as your webserver.  If you're using TLS to your webserver,
@@ -11,9 +11,9 @@ ever crossing the network, then the proxy can use TLS to the IMAP server.
 The proxy will only use TLS if the real IMAP server forces it to do so by
 advertising LOGINDISABLED in the capability string.
 
-imapproxy does not support the deprecated notion of imaps using port 993.
-It only supports the use of the STARTTLS command to initiate SSL/TLS from
-within a regular IMAP connection.
+squirrelmail-imap_proxy does not support the deprecated notion of imaps
+using port 993.  It only supports the use of the STARTTLS command to
+initiate SSL/TLS from within a regular IMAP connection.
 
 There are four configuration file options that you'll have to set in order
 for SSL to work.  They are tls_ca_file, tls_ca_path, tls_cert_file and

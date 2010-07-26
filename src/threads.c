@@ -56,7 +56,7 @@ static unsigned long id_function(void);
 
 static pthread_mutex_t *locks;
 
-/* We use pthreads, since the rest of imapproxy does. */
+/* We use pthreads, since the rest of squirrelmail-imap_proxy does. */
 
 void ssl_thread_setup(const char *fn) {
     int i, rc;

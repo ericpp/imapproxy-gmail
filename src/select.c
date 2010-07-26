@@ -13,7 +13,7 @@
 **
 **  Abstract:
 **
-**      routines to support SELECT state caching in imapproxy.
+**      routines to support SELECT state caching in squirrelmail-imap_proxy.
 **
 **  Authors:
 **

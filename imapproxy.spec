@@ -1,4 +1,4 @@
-#This is imapproxy rpm spec file
+#This is squirrelmail-imap_proxy rpm spec file
 
 %define ver	1.2.7
 %define rel	1
@@ -6,7 +6,7 @@
 
 %define withkrb5 0
 # Check for option at command line, ie:
-# rpmbuild -bb imapproxy.spec --define 'with_krb5 1'
+# rpmbuild -bb squirrelmail-imap_proxy.spec --define 'with_krb5 1'
 # with_krb5 indicates the Kerberos includes are needed (ie: Red Hat Linux 9)
 %{?with_krb5:%define withkrb5 1}
 

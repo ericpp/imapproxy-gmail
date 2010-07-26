@@ -1,4 +1,4 @@
-PKG=imapproxy
+PKG=squirrelmail-imap_proxy
 NAME=SquirrelMail IMAP Proxy
 ARCH=sparc
 VERSION=1.2.7

@@ -860,7 +860,7 @@ static int cmd_authenticate_login( ITD_Struct *Client,
      */
     if (Server.conn->reused == 1)
     {
-	sprintf( SendBuf, "* OK [XPROXYREUSE] IMAP connection reused by imapproxy\r\n" );
+	sprintf( SendBuf, "* OK [XPROXYREUSE] IMAP connection reused by squirrelmail-imap_proxy\r\n" );
 	if ( IMAP_Write( Client->conn, SendBuf, strlen(SendBuf) ) == -1 )
 	{
 	    syslog(LOG_ERR, "%s: IMAP_Write() failed: %s", fn, strerror(errno) );
@@ -1004,7 +1004,7 @@ static int cmd_login( ITD_Struct *Client,
      */
     if (Server.conn->reused == 1)
     {
-	sprintf( SendBuf, "* OK [XPROXYREUSE] IMAP connection reused by imapproxy\r\n" );
+	sprintf( SendBuf, "* OK [XPROXYREUSE] IMAP connection reused by squirrelmail-imap_proxy\r\n" );
 	if ( IMAP_Write( Client->conn, SendBuf, strlen(SendBuf) ) == -1 )
 	{
 	    syslog(LOG_ERR, "%s: IMAP_Write() failed: %s", fn, strerror(errno) );
