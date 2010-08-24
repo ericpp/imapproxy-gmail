@@ -1,3 +1,10 @@
+2010-08-19  Paul Lesniewski <paul@squirrelmail.org>
+	* Added several warnings that try to catch the case where someone
+          tries to set the server_port to 993, which is usually a mistaken
+          use of TLS/SSL (port 993 is usually for imaps, which is not
+          supported; IMAP Proxy supports STARTTLS from a "normal" port,
+          which is usually 143)
+
 2010-07-26  Paul Lesniewski <paul@squirrelmail.org>
 	* Updated copyrights and other administrative actions related to
           the adoption of this software by the SquirrelMail Project
