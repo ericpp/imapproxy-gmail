@@ -1,3 +1,7 @@
+2010-10-28  Paul Lesniewski <paul@squirrelmail.org>
+	* Fixed LOGIN command so that it handles literal arguments
+          correctly.
+
 2010-08-19  Paul Lesniewski <paul@squirrelmail.org>
 	* Added several warnings that try to catch the case where someone
           tries to set the server_port to 993, which is usually a mistaken

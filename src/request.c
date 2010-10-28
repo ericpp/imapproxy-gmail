@@ -1881,6 +1881,88 @@ extern void HandleRequest( int clientsd )
 	    S_UserName[ sizeof S_UserName - 1 ] = '\0';
 	    
 	    /*
+	     * Clients can send the username as a literal bytestream.  Check
+	     * for that here (the username we grabbed above will actually
+	     * be the literal token itself (the ONLY token on the line)
+	     * instead of the real username).
+	     */
+	    if ( Client.LiteralBytesRemaining
+	     && memtok( NULL, EndOfLine, &Lasts ) == NULL
+	     && S_UserName[ 0 ] == '{' && S_UserName[ strlen( S_UserName ) - 1 ] == '}' )
+	    {
+
+		if ( ( sizeof S_UserName - 1 ) < Client.LiteralBytesRemaining )
+		{
+		    syslog( LOG_ERR, "%s: username length would cause buffer overflow.", fn );
+		    /*
+		     * we have to at least eat the literal bytestream because
+		     * of the way our I/O routines work.
+		     */
+		    memset( &Client.ReadBuf, 0, sizeof Client.ReadBuf );
+		    Client.BytesInReadBuffer = 0;
+		    Client.ReadBytesProcessed = 0;
+		    Client.LiteralBytesRemaining = 0;
+		    Client.NonSyncLiteral = 0;
+		    Client.MoreData = 0;
+		    
+		    snprintf( SendBuf, BufLen, "%s NO LOGIN failed\r\n", S_Tag );
+		    if ( IMAP_Write( Client.conn, SendBuf, strlen(SendBuf) ) == -1 )
+		    {
+			IMAPCount->CurrentClientConnections--;
+			close( Client.conn->sd );
+			return;
+		    }
+		    continue;
+		}
+
+		CP = S_UserName;
+
+		if ( ! Client.NonSyncLiteral )
+		{
+		    sprintf( SendBuf, "+ go ahead\r\n" );
+		    if ( IMAP_Write( Client.conn, SendBuf, strlen(SendBuf) ) == -1 )
+		    {
+			IMAPCount->CurrentClientConnections--;
+			close( Client.conn->sd );
+			return;
+		    }
+		}
+
+		while ( Client.LiteralBytesRemaining )
+		{
+		    BytesRead = IMAP_Literal_Read( &Client );
+		    
+		    if ( BytesRead == -1 )
+		    {
+			syslog( LOG_NOTICE, "%s: Failed to read string literal from client on login.", fn );
+			snprintf( SendBuf, BufLen, "%s NO LOGIN failed\r\n", S_Tag );
+			if ( IMAP_Write( Client.conn, SendBuf, strlen(SendBuf) ) == -1 )
+			{
+			    IMAPCount->CurrentClientConnections--;
+			    close( Client.conn->sd );
+			    return;
+			}
+			continue;
+		    }
+		    
+		    memcpy ( (void *)CP, (const void *)Client.ReadBuf, BytesRead );
+		    CP += BytesRead;
+		}
+		*CP = '\0';
+
+		/*
+		 * Thankfully, IMAP_Literal_Read() leaves the rest of
+		 * the line in buffer, so we can read the rest now and
+		 * let the code below grab the password as usual, being
+		 * careful to reset our read/token pointers
+		 */
+		BytesRead = IMAP_Line_Read( &Client );
+		EndOfLine = Client.ReadBuf + BytesRead;
+		Lasts = Client.ReadBuf;
+
+	    }
+
+	    /*
 	     * Clients can send the password as a literal bytestream.  Check
 	     * for that here.
 	     */
@@ -1899,8 +1981,8 @@ extern void HandleRequest( int clientsd )
 		    Client.LiteralBytesRemaining = 0;
 		    Client.NonSyncLiteral = 0;
 		    Client.MoreData = 0;
-		    
-		    snprintf( SendBuf, BufLen, "%s NO LOGIN failed\r\n", Tag );
+
+		    snprintf( SendBuf, BufLen, "%s NO LOGIN failed\r\n", S_Tag );
 		    if ( IMAP_Write( Client.conn, SendBuf, strlen(SendBuf) ) == -1 )
 		    {
 			IMAPCount->CurrentClientConnections--;
@@ -1932,7 +2014,7 @@ extern void HandleRequest( int clientsd )
 		    if ( BytesRead == -1 )
 		    {
 			syslog( LOG_NOTICE, "%s: Failed to read string literal from client on login.", fn );
-			snprintf( SendBuf, BufLen, "%s NO LOGIN failed\r\n", Tag );
+			snprintf( SendBuf, BufLen, "%s NO LOGIN failed\r\n", S_Tag );
 			if ( IMAP_Write( Client.conn, SendBuf, strlen(SendBuf) ) == -1 )
 			{
 			    IMAPCount->CurrentClientConnections--;
@@ -1956,6 +2038,10 @@ extern void HandleRequest( int clientsd )
 		 * a real solution, but I hesitate to fiddle with 
 		 * IMAP_Literal_Read() right now since it works properly
 		 * otherwise.
+		 * Note: from the perspective of a naive user of this function
+		 * (elsewhere), the fact that it leaves the rest of the line
+		 * in the buffer is very helpful, so I'd say don't change that
+		 * behavior!
 		 */
 		rc = IMAP_Line_Read( &Client );
 	    }
@@ -1973,7 +2059,7 @@ extern void HandleRequest( int clientsd )
 		if ( Lasts >= CP )
 		{
 		    /* no password -- complain back to the client */
-		    snprintf( SendBuf, BufLen, "%s BAD Missing required argument to Login\r\n", Tag );
+		    snprintf( SendBuf, BufLen, "%s BAD Missing required argument to Login\r\n", S_Tag );
 		    if ( IMAP_Write( Client.conn, SendBuf, strlen(SendBuf) ) == -1 )
 		    {
 			IMAPCount->CurrentClientConnections--;
