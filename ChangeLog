@@ -1,4 +1,8 @@
 2010-10-28  Paul Lesniewski <paul@squirrelmail.org>
+	* Fixed possible buffer overflow issue and a few other small
+          issues, complements Jose Celestino.  Thanks also to Tomas
+          Lindroos.
+
 	* Fixed LOGIN command so that it handles literal arguments
           correctly.
 

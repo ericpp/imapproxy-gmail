@@ -339,7 +339,7 @@ static int Populate_Select_Cache( ITD_Struct *Server,
 	if ( Server->LiteralBytesRemaining )
 	{
 	    syslog( LOG_ERR, "%s: Server response to SELECT command contains unexpected literal data on sd [%d].",
-	        fn, Server->conn );
+	        fn, Server->conn->sd );
 	    /*
 	     * Must eat the literal.
 	     */

@@ -768,7 +768,7 @@ static int cmd_authenticate_login( ITD_Struct *Client,
     /*
      * Same drill all over again, except this time it's for the password.
      */
-    snprintf( Password, BufLen, "Password:" );
+    snprintf( Password, MAXPASSWDLEN - 1, "Password:" );
     
     EVP_EncodeBlock( EncodedPassword, Password, strlen( Password ) );
     

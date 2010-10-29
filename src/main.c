@@ -680,7 +680,11 @@ int main( int argc, char *argv[] )
 	     IMAPCount->PeakClientConnections )
 	    IMAPCount->PeakClientConnections = IMAPCount->CurrentClientConnections;
 	
-	pthread_create( &ThreadId, &attr, (void *)HandleRequest, (void *)clientsd );
+	rc = pthread_create( &ThreadId, &attr, (void *)HandleRequest, (void *)clientsd );
+	if (rc != 0) {
+	    syslog(LOG_ERR, "%s: pthread_create() returned error [%d] for HandleRequest.", fn, rc );
+	    close(clientsd);
+	}
 	
     }
 }
