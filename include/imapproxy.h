@@ -257,7 +257,7 @@ struct IMAPTransactionDescriptor
 struct IMAPConnectionContext
 {
     struct IMAPConnectionDescriptor *server_conn;
-    char username[64];                  /* username connected on this sd     */
+    char username[MAXUSERNAMELEN];      /* username connected on this sd     */
     char hashedpw[16];                  /* md5 hash copy of password         */
     time_t logouttime;                  /* time the user logged out last     */
     struct IMAPConnectionContext *next; /* linked list next pointer          */
