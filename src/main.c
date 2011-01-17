@@ -440,71 +440,92 @@ int main( int argc, char *argv[] )
     
     memset( ICC_HashTable, 0, sizeof ICC_HashTable );
 
+
+#if HAVE_LIBSSL
+    /*
+     * If we're going to support using STARTTLS to connect
+     * to the server, at a minimum we need a CA file (or path)
+     */
+    if ( PC_Struct.tls_ca_file || PC_Struct.tls_ca_path )
+    {
+	/* Initialize SSL_CTX */
+	syslog( LOG_INFO, "%s: Enabling openssl library.", fn );
+	SSL_library_init();
+
+	/* Set up OpenSSL thread protection */
+	ssl_thread_setup(fn);
+
+	/* Need to seed PRNG, too! */
+	if ( RAND_egd( ( RAND_file_name( f_randfile, sizeof( f_randfile ) ) == f_randfile ) ? f_randfile : "/.rnd" ) )
+	{
+	    /* Not an EGD, so read and write it. */
+	    if ( RAND_load_file( f_randfile, -1 ) )
+	    RAND_write_file( f_randfile );
+	}
+
+	SSL_load_error_strings();
+	tls_ctx = SSL_CTX_new( TLSv1_client_method() );
+	if ( tls_ctx == NULL )
+	{ 
+	    syslog(LOG_ERR, "%s: Failed to create new SSL_CTX.  Exiting.", fn);
+	    exit( 1 );
+	}
+ 
+	/* Work around all known bugs */
+	SSL_CTX_set_options( tls_ctx, SSL_OP_ALL );
+ 
+	if ( ! SSL_CTX_load_verify_locations( tls_ctx,
+						PC_Struct.tls_ca_file,
+						PC_Struct.tls_ca_path ) ||
+	    ! SSL_CTX_set_default_verify_paths( tls_ctx ) )
+	{ 
+	    syslog(LOG_ERR, "%s: Failed to load CA data.  Exiting.", fn);
+	    exit( 1 );
+	}
+ 
+	if ( ! set_cert_stuff( tls_ctx,
+				PC_Struct.tls_cert_file,
+				PC_Struct.tls_key_file ) )
+	{ 
+	    syslog(LOG_ERR, "%s: Failed to load cert/key data.  Exiting.", fn);
+	    exit( 1 );
+	}
+
+	SSL_CTX_set_verify(tls_ctx, SSL_VERIFY_NONE, verify_callback);
+    }
+#endif /* HAVE_LIBSSL */
+
+
     ServerInit();
     
     /* Daemonize() would go here */
 
     SetBannerAndCapability();
     
-    if ( PC_Struct.login_disabled || PC_Struct.force_tls )
+
+    /*
+     * We don't need to check PC_Struct.support_starttls since we
+     * probably have refetched the capability list after a STARTTLS
+     * if we did one; it won't ever be supported at this point.
+     *
+     * It also makes no difference to check PC_Struct.force_tls now
+     * because we've either done a STARTTLS or we haven't - all that
+     * matters is if we got LOGINDISABLED or not.
+     *
+     * Note that all these things *ARE* tested when checking the
+     * server capabilities (in fact, the following check is probably
+     * a duplicate).
+     */
+    if ( PC_Struct.login_disabled )
     {
-	syslog( LOG_INFO, "%s: Enabling STARTTLS.", fn );
-#if HAVE_LIBSSL
-	if ( PC_Struct.support_starttls )
-	{
-	    /* Initialize SSL_CTX */
-	    SSL_library_init();
-
-	    /* Set up OpenSSL thread protection */
-	    ssl_thread_setup(fn);
-	    
-            /* Need to seed PRNG, too! */
-            if ( RAND_egd( ( RAND_file_name( f_randfile, sizeof( f_randfile ) ) == f_randfile ) ? f_randfile : "/.rnd" ) ) 
-	    {
-                /* Not an EGD, so read and write it. */
-                if ( RAND_load_file( f_randfile, -1 ) )
-                    RAND_write_file( f_randfile );
-            }
-	
-	    SSL_load_error_strings();
-	    tls_ctx = SSL_CTX_new( TLSv1_client_method() );
-	    if ( tls_ctx == NULL )
-	    {
-		syslog(LOG_ERR, "%s: Failed to create new SSL_CTX.  Exiting.", fn);
-		exit( 1 );
-	    }
-
-	    /* Work around all known bugs */
-	    SSL_CTX_set_options( tls_ctx, SSL_OP_ALL );
-
-	    if ( ! SSL_CTX_load_verify_locations( tls_ctx,
-						  PC_Struct.tls_ca_file,
-						  PC_Struct.tls_ca_path ) ||
-		 ! SSL_CTX_set_default_verify_paths( tls_ctx ) )
-	    {
-		syslog(LOG_ERR, "%s: Failed to load CA data.  Exiting.", fn);
-		exit( 1 );
-	    }
-
-	    if ( ! set_cert_stuff( tls_ctx,
-				   PC_Struct.tls_cert_file,
-				   PC_Struct.tls_key_file ) )
-	    {
-		syslog(LOG_ERR, "%s: Failed to load cert/key data.  Exiting.", fn);
-		exit( 1 );
-	    }
-
-	    SSL_CTX_set_verify(tls_ctx, SSL_VERIFY_NONE, verify_callback);
-	}
-	else
-#endif /* HAVE_LIBSSL */
-	{
-	    /* We're screwed!  We won't be able to login without SASL */
-	    syslog(LOG_ERR, "%s: IMAP server has LOGINDISABLED and we can't do STARTTLS.  Exiting.", fn);
-	    exit( 1 );
-	}
+	/* We're screwed!  We can't login */
+	syslog(LOG_ERR,
+		"%s: IMAP server has LOGINDISABLED.  Exiting.",
+		fn);
+	exit( 1 );
     }
-    
+
+
     memset( &aihints, 0, sizeof aihints );
     aihints.ai_family = AF_UNSPEC;
     aihints.ai_socktype = SOCK_STREAM;
@@ -1013,6 +1034,7 @@ static int ParseBannerAndCapability( char *DestBuf,
 	exit( 1 );
     }
     
+    syslog( LOG_INFO, "%s: Attempting to parse capability string: %s", fn, SourceBuf);
     
     /*
      * strip out all of the AUTH mechanisms except the ones that we support.
@@ -1139,6 +1161,7 @@ static int ParseBannerAndCapability( char *DestBuf,
 	    if ( ! strncasecmp( CP, "STARTTLS", strlen( "STARTTLS" ) ) )
 	    {
 	        PC_Struct.support_starttls = STARTTLS_SUPPORTED;
+	        //syslog( LOG_INFO, "%s: Found out the server supports STARTTLS, even though we don't", fn);
 	        continue;
 	    }
 	
@@ -1325,6 +1348,103 @@ static void SetBannerAndCapability( void )
 	exit( 1 );
     }
     
+    /*
+     * If we're using it, attempt STARTTLS before doing one more
+     * CAPABILITY so our capability string is accurate
+     */
+    if ( PC_Struct.login_disabled || PC_Struct.force_tls )
+    {
+#if HAVE_LIBSSL
+	if ( PC_Struct.support_starttls != STARTTLS_NOT_SUPPORTED )
+	{
+	    if ( Attempt_STARTTLS( &itd ) != 0 )
+	    {
+		syslog(LOG_ERR, "%s: STARTTLS failed for CAPABILITY check -- exiting.", fn );
+		close( itd.conn->sd );
+		exit( 1 );
+	    }
+	    else
+	    {
+		/*
+		 * STARTTLS was successful, so we can proceed
+		 * to get the new CAPABILITY list - first,
+		 * send a CAPABILITY command to the server.
+		 */
+		if ( IMAP_Write( itd.conn, "1 CAPABILITY\r\n", strlen("1 CAPABILITY\r\n") ) == -1 )
+		{
+		    syslog(LOG_ERR, "%s: Unable to send capability command to server: %s -- exiting.", fn, strerror(errno) );
+		    close( itd.conn->sd );
+		    exit( 1 );
+		}
+
+		/*
+		 * From RFC2060:
+		 * The server MUST send a single untagged
+		 * CAPABILITY response with "IMAP4rev1" as one of the listed
+		 * capabilities before the (tagged) OK response.
+		 *
+		 * The means we should read exactly 2 lines of data back from the server.
+		 * The first will be the untagged capability line.
+		 * The second will be the OK response with the tag in it.
+		 */
+
+		BytesRead = IMAP_Line_Read( &itd );
+		if ( BytesRead == -1 )
+		{
+		    syslog( LOG_ERR, "%s: Failed to read capability response from server: %s --  exiting.", fn, strerror( errno ) );
+		    close( itd.conn->sd );
+		    exit( 1 );
+		}
+
+		if ( itd.LiteralBytesRemaining )
+		{
+		    syslog( LOG_ERR, "%s: Server sent unexpected literal specifier in CAPABILITY response -- Exiting.", fn );
+		    close( itd.conn->sd );
+		    exit ( 1 );
+		}
+
+		CapabilityLen = ParseBannerAndCapability( Capability, sizeof Capability - 1,
+		itd.ReadBuf, BytesRead, 1 );
+
+		/* Now read the tagged response and make sure it's OK */
+		BytesRead = IMAP_Line_Read( &itd );
+		if ( BytesRead == -1 )
+		{
+		    syslog( LOG_ERR, "%s: Failed to read capability response from server: %s -- exiting.", fn, strerror( errno ) );
+		    close( itd.conn->sd );
+		    exit( 1 );
+		}
+
+		if ( itd.LiteralBytesRemaining )
+		{
+		    syslog( LOG_ERR, "%s: Server sent unexpected literal specifier in tagged CAPABILITY response -- exiting.", fn );
+		    exit( 1 );
+		}
+
+		if ( strncasecmp( itd.ReadBuf, IMAP_TAGGED_OK, strlen(IMAP_TAGGED_OK) ) )
+		{
+		    syslog(LOG_ERR, "%s: Received non-OK tagged reponse from imap server on CAPABILITY command -- exiting.", fn );
+		    close( itd.conn->sd );
+		    exit( 1 );
+		}
+	    }
+	}
+	else
+#endif /* HAVE_LIBSSL */
+	{
+	    /* We're screwed!  We won't be able to login without SASL */
+	    syslog(LOG_ERR,
+		"%s: IMAP server has LOGINDISABLED and we can't do STARTTLS.  Exiting.",
+		fn);
+	    close( itd.conn->sd );
+	    exit( 1 );
+	}
+    }
+    else
+    {
+	//syslog( LOG_ERR, "%s: Not trying STARTTLS and second CAPABILITY.", fn );
+    }
+
     /* Be nice and logout */
     if ( IMAP_Write( itd.conn, "2 LOGOUT\r\n", strlen("2 LOGOUT\r\n") ) == -1 )
     {
@@ -1444,7 +1564,6 @@ static int set_cert_stuff(SSL_CTX * ctx,
  *                          \          |
  *                           \_________|
  */
-
 
 
 

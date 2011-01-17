@@ -393,6 +393,15 @@ extern void SetConfigOptions( char *ConfigFile )
     ADD_TO_TABLE( "cache_expiration_time", SetNumericValue, 
 		  &PC_Struct.cache_expiration_time, index );
 
+    ADD_TO_TABLE( "auth_sasl_plain_username", SetStringValue,
+		  &PC_Struct.auth_sasl_plain_username, index );
+    
+    ADD_TO_TABLE( "auth_sasl_plain_password", SetStringValue,
+		  &PC_Struct.auth_sasl_plain_password, index );
+
+    ADD_TO_TABLE( "auth_shared_secret", SetStringValue,
+		  &PC_Struct.auth_shared_secret, index);
+
     ADD_TO_TABLE( "proc_username", SetStringValue,
 		  &PC_Struct.proc_username, index );
     

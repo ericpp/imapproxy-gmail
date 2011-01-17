@@ -338,7 +338,155 @@ extern void UnLockMutex( pthread_mutex_t *mutex )
     return;
 }
 
-    
+
+/*++
+ * Function:	Attempt_STARTTLS
+ *
+ * Purpose:	Upgrade plain text connection/negotiate STARTTLS
+ *
+ * Parameters:	ptr to an IMAPTransactionDescriptor structure
+ *
+ * Returns:	0 on success
+ *         	-1 on failure
+ *
+ * Authors:	Dave McMurtrie <davemcmurtrie@hotmail.com>
+ *
+ * Notes: 	This function assumes that SSL support has already
+ *       	been initialized.
+ * 
+ *        	This function is a result of re-factoring of existing
+ *       	code resulting from a patch submitted by Martin B.
+ *       	Smith <smithmb@ufl.edu>
+ *--
+ */
+#if HAVE_LIBSSL
+extern int Attempt_STARTTLS( ITD_Struct *Server )
+{
+    char *fn = "Attempt_STARTTLS()";
+
+    unsigned int BufLen = BUFSIZE - 1;
+    char SendBuf[BUFSIZE];
+    char *tokenptr;
+    char *endptr;
+    char *last;
+    int rc;
+
+
+    syslog( LOG_INFO, "%s: Enabling STARTTLS.", fn );
+
+	snprintf( SendBuf, BufLen, "S0001 STARTTLS\r\n" );
+	if ( IMAP_Write( Server->conn, SendBuf, strlen(SendBuf) ) == -1 )
+	{
+	    syslog(LOG_INFO, "STARTTLS failed: IMAP_Write() failed attempting to send STARTTLS command to IMAP server: %s", strerror( errno ) );
+	    goto fail;
+	}
+
+	/*
+	 * Read the server response
+	 */
+	if ( ( rc = IMAP_Line_Read( Server ) ) == -1 )
+	{
+	    syslog(LOG_INFO, "STARTTLS failed: No response from IMAP server after sending STARTTLS command" );
+	    goto fail;
+	}
+
+	if ( Server->LiteralBytesRemaining )
+	{
+	    syslog(LOG_ERR, "%s: Unexpected string literal in server response.", fn );
+	    goto fail;
+	}
+
+
+	/*
+	 * Try to match up the tag in the server response to the client tag.
+	 */
+	endptr = Server->ReadBuf + rc;
+
+	tokenptr = memtok( Server->ReadBuf, endptr, &last );
+
+	if ( !tokenptr )
+	{
+	    /*
+	     * no tokens found in server response?  Not likely, but we still
+	     * have to check.
+	     */
+	    syslog(LOG_INFO, "STARTTLS failed: server response to STARTTLS command contained no tokens." );
+	    goto fail;
+	}
+
+	if ( memcmp( (const void *)tokenptr, (const void *)"S0001",
+			strlen( tokenptr ) ) )
+	{
+	    /*
+	     * non-matching tag read back from the server... Lord knows what this
+	     * is, so we'll fail.
+	     */
+	    syslog(LOG_INFO, "STARTTLS failed: server response to STARTTLS command contained non-matching tag." );
+	    goto fail;
+	}
+
+	/*
+	 * Now that we've matched the tags up, see if the response was 'OK'
+	 */
+	tokenptr = memtok( NULL, endptr, &last );
+
+	if ( !tokenptr )
+	{
+	    /* again, not likely but we still have to check... */
+	    syslog(LOG_INFO, "STARTTLS failed: Malformed server response to STARTTLS command" );
+	    goto fail;
+	}
+
+	if ( memcmp( (const void *)tokenptr, "OK", 2 ) )
+	{
+	    /*
+	     * If the server sent back a "NO" or "BAD", we can look at the actual
+	     * server logs to figure out why.  We don't have to break our ass here
+	     * putting the string back together just for the sake of logging.
+	     */
+	    syslog(LOG_INFO, "STARTTLS failed: non-OK server response to STARTTLS command" );
+	    goto fail;
+	}
+
+	Server->conn->tls = SSL_new( tls_ctx );
+	if ( Server->conn->tls == NULL )
+	{
+	    syslog(LOG_INFO, "STARTTLS failed: SSL_new() failed" );
+	    goto fail;
+	}
+
+	SSL_clear( Server->conn->tls );
+	rc = SSL_set_fd( Server->conn->tls, Server->conn->sd );
+	if ( rc == 0 )
+	{
+	    syslog(LOG_INFO,
+		    "STARTTLS failed: SSL_set_fd() failed: %d",
+		    SSL_get_error( Server->conn->tls, rc ) );
+	    goto fail;
+	}
+
+	SSL_set_connect_state( Server->conn->tls );
+	rc = SSL_connect( Server->conn->tls );
+	if ( rc <= 0 )
+	{
+	    syslog(LOG_INFO,
+		    "STARTTLS failed: SSL_connect() failed, %d: %s",
+		    SSL_get_error( Server->conn->tls, rc ), SSLerrmessage() );
+	    goto fail;
+	}
+
+	return 0;
+
+  fail:
+    if ( Server->conn->tls )
+    {
+	SSL_shutdown( Server->conn->tls );
+	SSL_free( Server->conn->tls );
+    }
+    return -1;
+}
+#endif
+
 
 /*++
  * Function:	Get_Server_conn
@@ -374,6 +522,11 @@ extern ICD_Struct *Get_Server_conn( char *Username,
     unsigned int HashIndex;
     ICC_Struct *HashEntry = NULL;
     char SendBuf[BUFSIZE];
+
+    char EncodedAuthBuf[BUFSIZE];
+    char AuthBuf[BUFSIZE];
+    char AuthBufIndex;
+
     unsigned int BufLen = BUFSIZE - 1;
     char md5pw[MD5_DIGEST_LENGTH];
     char *tokenptr;
@@ -507,6 +660,10 @@ extern ICD_Struct *Get_Server_conn( char *Username,
     
     UnLockMutex( &mp );
     
+    syslog( LOG_INFO,
+	    "LOGIN: '%s' (%s:%s) no previous connection: creating a new one",
+	    Username, ClientAddr, portstr);
+
     /*
      * We don't have an active connection for this user, or the password
      * didn't match.
@@ -572,103 +729,8 @@ extern ICD_Struct *Get_Server_conn( char *Username,
 #if HAVE_LIBSSL
     if ( PC_Struct.login_disabled || PC_Struct.force_tls )
     {
-	snprintf( SendBuf, BufLen, "S0001 STARTTLS\r\n" );
-	if ( IMAP_Write( Server.conn, SendBuf, strlen(SendBuf) ) == -1 )
+	if ( Attempt_STARTTLS( &Server ) != 0 )
 	{
-	    syslog(LOG_INFO, "STARTTLS failed: IMAP_Write() failed attempting to send STARTTLS command to IMAP server: %s", strerror( errno ) );
-	    goto fail;
-	}
-
-	/*
-	 * Read the server response
-	 */
-	if ( ( rc = IMAP_Line_Read( &Server ) ) == -1 )
-	{
-	    syslog(LOG_INFO, "STARTTLS failed: No response from IMAP server after sending STARTTLS command" );
-	    goto fail;
-	}
-
-	if ( Server.LiteralBytesRemaining )
-	{
-	    syslog(LOG_ERR, "%s: Unexpected string literal in server response.", fn );
-	    goto fail;
-	
-	}
-	
-    
-	/*
-	 * Try to match up the tag in the server response to the client tag.
-	 */
-	endptr = Server.ReadBuf + rc;
-    
-	tokenptr = memtok( Server.ReadBuf, endptr, &last );
-    
-	if ( !tokenptr )
-	{
-	    /* 
-	     * no tokens found in server response?  Not likely, but we still
-	     * have to check.
-	     */
-	    syslog(LOG_INFO, "STARTTLS failed: server response to STARTTLS command contained no tokens." );
-	    goto fail;
-	}
-    
-	if ( memcmp( (const void *)tokenptr, (const void *)"S0001", 
-		     strlen( tokenptr ) ) )
-	{
-	    /* 
-	     * non-matching tag read back from the server... Lord knows what this
-	     * is, so we'll fail.
-	     */
-	    syslog(LOG_INFO, "STARTTLS failed: server response to STARTTLS command contained non-matching tag." );
-	    goto fail;
-	}
-    
-	/*
-	 * Now that we've matched the tags up, see if the response was 'OK'
-	 */
-	tokenptr = memtok( NULL, endptr, &last );
-    
-	if ( !tokenptr )
-	{
-	    /* again, not likely but we still have to check... */
-	    syslog(LOG_INFO, "STARTTLS failed: Malformed server response to STARTTLS command" );
-	    goto fail;
-	}
-    
-	if ( memcmp( (const void *)tokenptr, "OK", 2 ) )
-	{
-	    /*
-	     * If the server sent back a "NO" or "BAD", we can look at the actual
-	     * server logs to figure out why.  We don't have to break our ass here
-	     * putting the string back together just for the sake of logging.
-	     */
-	    syslog(LOG_INFO, "STARTTLS failed: non-OK server response to STARTTLS command" );
-	    goto fail;
-	}
-    
-	Server.conn->tls = SSL_new( tls_ctx );
-	if ( Server.conn->tls == NULL )
-	{
-	    syslog(LOG_INFO, "STARTTLS failed: SSL_new() failed" );
-	    goto fail;
-	}
-	    
-	SSL_clear( Server.conn->tls );
-	rc = SSL_set_fd( Server.conn->tls, Server.conn->sd );
-	if ( rc == 0 )
-	{
-	    syslog(LOG_INFO, "STARTTLS failed: SSL_set_fd() failed: %d",
-		   SSL_get_error( Server.conn->tls, rc ) );
-	    goto fail;
-	}
-
-	SSL_set_connect_state( Server.conn->tls );
-	rc = SSL_connect( Server.conn->tls );
-	if ( rc <= 0 )
-	{
-	    syslog(LOG_INFO, "STARTTLS failed: SSL_connect() failed, %d: %s",
-		   SSL_get_error( Server.conn->tls, rc ), SSLerrmessage() );
 	    goto fail;
 	}
 
@@ -678,10 +740,103 @@ extern ICD_Struct *Get_Server_conn( char *Username,
 
 
     /*
-     * Send the login command off to the IMAP server.  Have to treat a literal
-     * password different.
+     * If configured to do so, execute SASL PLAIN authentication
+     * using the static authentication username and password from
+     * configuration (auth_sasl_plain_username/auth_sasl_plain_password).
+     *
+     * Note that because this means no password is required from
+     * the client, we won't allow this means of authentication
+     * without the client sending a shared secret instead, which
+     * must match what's in the configuration (auth_shared_secret).
      */
-    if ( LiteralPasswd )
+    if ( PC_Struct.auth_sasl_plain_username
+	&& PC_Struct.auth_sasl_plain_password
+	&& PC_Struct.auth_shared_secret )
+    {
+	/*
+	 * Check shared secret first (accounting for when a password
+	 * is wrapped in quotes)
+	 */
+	if ( *Password == '"' && *(Password + strlen( Password ) - 1) == '"' )
+	    rc = strncmp( Password + 1, PC_Struct.auth_shared_secret, strlen( Password ) - 2 );
+	else
+	    rc = strcmp( Password, PC_Struct.auth_shared_secret );
+	if ( rc != 0 )
+	{
+	    syslog( LOG_INFO,
+		    "LOGIN: '%s' (%s:%s) failed: shared secret was wrong",
+		    Username, ClientAddr, portstr );
+	    goto fail;
+	}
+
+	/*
+	 * Build SASL AUTH PLAIN string:
+	 * username\0authentication_username\0authentication_password
+	 */
+	char *ptr_username;
+	unsigned int username_size;
+
+	/*
+	 * But first, if username is enclosed in quotes, skip the
+	 * first one and overwrite the second with \0 (with pointer
+	 * math for our use below, since we are still working on
+	 * the original Username)
+	 */
+	ptr_username = Username;
+	username_size = strlen( Username );
+	if ( *ptr_username == '"' && *(ptr_username + username_size - 1) == '"' )
+	{
+	    ++ptr_username;
+	    username_size = username_size - 2;
+	}
+
+	/*
+	 * Add username and \0 to AUTH PLAIN buffer
+	 */
+	if ( username_size > BufLen - 1 )
+	    username_size = BufLen - 1;
+	memcpy( AuthBuf, ptr_username, username_size );
+	AuthBuf[username_size] = '\0';
+	AuthBufIndex = username_size;
+
+	/*
+	 * Add authentication username and \0 to AUTH PLAIN buffer
+	 */
+	AuthBufIndex += snprintf( AuthBuf + AuthBufIndex + 1,
+				BufLen - AuthBufIndex - 1,
+				"%s",
+				PC_Struct.auth_sasl_plain_username );
+
+	/*
+	 * Add authentication password to AUTH PLAIN buffer
+	 */
+	AuthBufIndex += snprintf( AuthBuf + AuthBufIndex + 2,
+				BufLen - AuthBufIndex - 2,
+				"%s",
+				PC_Struct.auth_sasl_plain_password );
+
+	EVP_EncodeBlock( EncodedAuthBuf, AuthBuf, AuthBufIndex + 2 );
+
+	snprintf( SendBuf, BufLen, "A0001 AUTHENTICATE PLAIN %s\r\n", EncodedAuthBuf );
+
+	/* syslog( LOG_INFO, "sending auth plain '%s'", EncodedAuthBuf ); */
+
+	if ( IMAP_Write( Server.conn, SendBuf, strlen(SendBuf) ) == -1 )
+	{
+	    syslog( LOG_INFO,
+		    "LOGIN: '%s' (%s:%s) failed: IMAP_Write() failed attempting to send AUTHENTICATE command to IMAP server: %s",
+		    Username, ClientAddr, portstr, strerror( errno ) );
+	    goto fail;
+	}
+    }
+
+
+    /*
+     * Otherwise, send a normal login command off to the IMAP server.
+     *
+     * ... but login command has to treat literal passwords differently:
+     */
+    else if ( LiteralPasswd )
     {
 	snprintf( SendBuf, BufLen, "A0001 LOGIN %s {%d}\r\n", 
 		  Username, strlen( Password ) );
@@ -732,11 +887,13 @@ extern ICD_Struct *Get_Server_conn( char *Username,
 	    goto fail;
 	}
     }
+
+
+    /*
+     * Just send the login command via normal means.
+     */
     else
     {
-	/*
-	 * just send the login command via normal means.
-	 */
 	snprintf( SendBuf, BufLen, "A0001 LOGIN %s %s\r\n", 
 		  Username, Password );
 	

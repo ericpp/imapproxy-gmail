@@ -1766,6 +1766,21 @@ extern void HandleRequest( int clientsd )
 		close( Client.conn->sd );
 		return;
 	    }
+	    else if ( !strcasecmp( (const char *)AuthMech, "PLAIN" ) )
+	    {
+		/*
+		 * we handle this mechanism, but internally; not as
+		 * requested by a client
+		 */
+		snprintf( SendBuf, BufLen, "%s NO no mechanism available, we do something different!\r\n", Tag );
+		if ( IMAP_Write( Client.conn, SendBuf, strlen(SendBuf) ) == -1 )
+		{
+		    IMAPCount->CurrentClientConnections--;
+		    close( Client.conn->sd );
+		    return;
+		}
+		continue;
+	    }
 	    else
 	    {
 		/*

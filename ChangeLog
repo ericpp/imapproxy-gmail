@@ -1,3 +1,8 @@
+2011-01-16  Paul Lesniewski <paul@squirrelmail.org>
+	* Added the ability to authenticate to the IMAP server
+          using SASL plain authentication with fixed authentication
+          credentials (thanks to Jeffrey Arbuckle and Martin Smith)
+
 2010-10-29  Paul Lesniewski <paul@squirrelmail.org>
 	* Fixed compilation warnings when openssl is not available.
 
