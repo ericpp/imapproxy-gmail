@@ -1,3 +1,7 @@
+2011-03-07  Paul Lesniewski <paul@squirrelmail.org>
+	* Added information about how to use squirrelmail-imap_proxy
+	  with servers that are only available via imaps
+
 2011-01-16  Paul Lesniewski <paul@squirrelmail.org>
 	* Added the ability to authenticate to the IMAP server
           using SASL plain authentication with fixed authentication

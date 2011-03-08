@@ -13,8 +13,14 @@ advertising LOGINDISABLED in the capability string.
 
 squirrelmail-imap_proxy does not support the deprecated notion of imaps
 using port 993.  It only supports the use of the STARTTLS command to
-initiate SSL/TLS from within a regular IMAP connection.  (Do NOT set the
-"server_port" setting in imapproxy.conf to 993!)
+initiate SSL/TLS from within a regular IMAP connection (do NOT set the
+"server_port" setting in imapproxy.conf to 993!).  However, keep reading...
+
+If you are trying to proxy to an IMAP server that is only available using
+imaps/port 993 (e.g., Gmail), you can setup a SSL tunnel (check out stunnel)
+to that server and let squirrelmail-imap_proxy talk to the local (plaintext)
+end of that tunnel (in which case, no SSL setup is required for
+squirrelmail-imap_proxy).
 
 There are four configuration file options that you'll have to set in order
 for SSL to work.  They are tls_ca_file, tls_ca_path, tls_cert_file and
