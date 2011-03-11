@@ -247,13 +247,8 @@ extern void ICC_Recycle_Loop( void )
  * Authors:	Dave McMurtrie <davemcmurtrie@hotmail.com>
  *--
  */
-extern void ICC_Logout( char *Username, ICD_Struct *conn )
+extern void ICC_Logout( ICC_Struct *ICC )
 {
-    char *fn = "ICC_Logout()";
-    unsigned int HashIndex;
-    ICC_Struct *HashEntry = NULL;
-    ICC_Struct *ICC_Active = NULL;
-    
     IMAPCount->InUseServerConnections--;
     IMAPCount->RetainedServerConnections++;
 
@@ -261,39 +256,34 @@ extern void ICC_Logout( char *Username, ICD_Struct *conn )
 	 IMAPCount->PeakRetainedServerConnections )
 	IMAPCount->PeakRetainedServerConnections = IMAPCount->RetainedServerConnections;
     
-    
-    HashIndex = Hash( Username, HASH_TABLE_SIZE );
-    
-    LockMutex( &mp );
-    
-    for ( HashEntry = ICC_HashTable[ HashIndex ]; 
-	  HashEntry; 
-	  HashEntry = HashEntry->next )
-    {
-	if ( ( strcmp( Username, HashEntry->username ) == 0 ) &&
-	     ( HashEntry->server_conn->sd == conn->sd ) )
-	{
-	    ICC_Active = HashEntry;
-	}
-    }
-    
-    if ( !ICC_Active )
-    {
-	UnLockMutex( &mp );
-	
-	syslog(LOG_WARNING, "%s: Cannot find ICC for '%s' on server sd %d to set logout time.", fn, Username, conn->sd );
-	return;
-    }
-    
-    ICC_Active->logouttime = time(0);
+    ICC->logouttime = time(0);
 
-    UnLockMutex( &mp );
-    
-    syslog(LOG_INFO, "LOGOUT: '%s' from server sd [%d]", Username, conn->sd );
+    syslog(LOG_INFO, "LOGOUT: '%s' from server sd [%d]", ICC->username, ICC->server_conn->sd );
     
     return;
 }
 
+void _ICC_Invalidate ( ICC_Struct *ICC )
+{
+    #if HAVE_LIBSSL
+    if ( ICC->server_conn->tls ) {
+        SSL_shutdown( ICC->server_conn->tls );
+        SSL_free( ICC->server_conn->tls );
+    }
+    #endif
+
+    close( ICC->server_conn->sd );
+
+    ICC->server_conn->sd = -1; /* make sure this can't be reused */
+    ICC->logouttime = 1;
+}
+
+extern void ICC_Invalidate ( ICC_Struct *ICC )
+{
+    LockMutex( &mp );
+    _ICC_Invalidate ( ICC );
+    UnLockMutex( &mp );
+}
 
 
 /*

@@ -872,7 +872,7 @@ static int cmd_authenticate_login( ITD_Struct *Client,
     if ( IMAP_Write( Client->conn, SendBuf, strlen( SendBuf ) ) == -1 )
     {
 	IMAPCount->InUseServerConnections--;
-	close( Server.conn->sd );
+    ICC_Invalidate(Server.conn->ICC);
 	syslog( LOG_ERR, "%s: Unable to send successful authentication message back to client: %s -- closing connection.", fn, strerror( errno ) );
 	return( -1 );
     }
@@ -894,10 +894,15 @@ static int cmd_authenticate_login( ITD_Struct *Client,
 
     rc = Raw_Proxy( Client, &Server, &Server.conn->ISC );
     
+    if (rc == -2) {
+        ICC_Invalidate( Server.conn->ICC );
+        return ( -1 );
+    }
+
     Client->TraceOn = 0;
     Server.TraceOn = 0;
     
-    ICC_Logout( Username, Server.conn );
+    ICC_Logout( Server.conn->ICC );
     
     return( rc );
 }
@@ -1024,7 +1029,7 @@ static int cmd_login( ITD_Struct *Client,
 	 * we can't communicate with the client...
 	 */
 	IMAPCount->InUseServerConnections--;
-	close( Server.conn->sd );
+    ICC_Invalidate(Server.conn->ICC);
 	syslog(LOG_ERR, "%s: Unable to send successful login message back to client: %s -- closing connection.", fn, strerror(errno) );
 	return( -1 );
     }
@@ -1047,6 +1052,11 @@ static int cmd_login( ITD_Struct *Client,
 
     rc = Raw_Proxy( Client, &Server, &Server.conn->ISC );
 
+    if (rc == -2) {
+        ICC_Invalidate( Server.conn->ICC );
+        return ( -1 );
+    }
+
     /*
      * It's not necessary to take out the trace mutex here.  The reason
      * we take it out when we check above is because the trace username
@@ -1058,7 +1068,7 @@ static int cmd_login( ITD_Struct *Client,
     Server.TraceOn = 0;
     
     /* update the logout time for this cached connection */
-    ICC_Logout( Username, Server.conn );
+    ICC_Logout( Server.conn->ICC );
     
     return( rc );
 }
@@ -1076,7 +1086,8 @@ static int cmd_login( ITD_Struct *Client,
  *		ptr to server ITD_Struct
  *
  * Returns:	1 if we caught a logout
- *		-1 on failure
+ *		-1 on failure on client
+ *		-2 on failure on server or fatal
  *
  * Authors:	Dave McMurtrie <davemcmurtrie@hotmail.com>
  *--
@@ -1150,7 +1161,17 @@ static int Raw_Proxy( ITD_Struct *Client, ITD_Struct *Server,
 	     * and HandleRequest will close the client-side socket.
 	     */
 	    syslog( LOG_WARNING, "%s: poll() timed out. server sd [%d]. client sd [%d].", fn, Server->conn->sd, Client->conn->sd );
-	    return( -1 );
+	    /*
+	     * Update - thanks to Jose Celestino's patch, we have a way to
+	     * immediately ensure the server connection is shut down and
+	     * not reused - for situations where we get server or other
+	     * anomalous errors.  So we'll return -2 here instead, which
+	     * will trigger cmd_login() or cmd_authenticate_login() (the
+	     * only two callers of this function) to take care of the
+	     * server connection right away and return -1 to HandleRequest()
+	     * which then just closes the client connection as usual.
+	     */
+	    return( -2 );
 	}
 	
 	if ( status < 0 )
@@ -1180,7 +1201,7 @@ static int Raw_Proxy( ITD_Struct *Client, ITD_Struct *Server,
 
 	    /* anything else, we're really jacked about it. */
 	    syslog(LOG_ERR, "%s: poll() failed: %s -- Returning failure.", fn, strerror( errno ) );
-	    return( -1 );
+	    return( -2 );
 	}
 	
 	FailCount = 0;
@@ -1210,7 +1231,7 @@ static int Raw_Proxy( ITD_Struct *Client, ITD_Struct *Server,
 			continue;
 		    
 		    syslog(LOG_WARNING, "%s: IMAP_Read() failed reading from IMAP server on sd [%d]: %s", fn, Server->conn->sd, strerror( errno ) );
-		    return( -1 );
+		    return( -2 );
 		}
 		break;
 	    }
@@ -1219,7 +1240,7 @@ static int Raw_Proxy( ITD_Struct *Client, ITD_Struct *Server,
 	    {
 		/* the server closed the connection, dammit */
 		syslog(LOG_ERR, "%s: IMAP server unexpectedly closed the connection on sd %d", fn, Server->conn->sd );
-		return( -1 );
+		return( -2 );
 	    }
 	    
 	    if ( Server->TraceOn )
@@ -1357,6 +1378,7 @@ static int Raw_Proxy( ITD_Struct *Client, ITD_Struct *Server,
 			    rc = Handle_Select_Command( Client, Server,
 							ISC, Client->ReadBuf,
 							status );
+//LEFT OFF HERE should this deal with ICC_INVALIDATE too???????????????????
 			    
 			    if ( rc == 0 )
 				continue;
@@ -1397,7 +1419,7 @@ static int Raw_Proxy( ITD_Struct *Client, ITD_Struct *Server,
 			    continue;
 			
 			syslog(LOG_ERR, "%s: IMAP_Write() failed sending data to server on sd [%d]: %s", fn, Server->conn->sd, strerror( errno ) );
-			return( -1 );
+			return( -2 );
 		    }
 		    break;
 		}
@@ -1482,8 +1504,8 @@ static int Raw_Proxy( ITD_Struct *Client, ITD_Struct *Server,
 			if ( errno == EINTR )
 			    continue;
 			
-			syslog(LOG_ERR, "%s: IMAP_Write() failed sending data to client on sd [%d]: %s", fn, Client->conn->sd, strerror( errno ) );
-			return( -1 );
+			syslog(LOG_ERR, "%s: IMAP_Write() failed sending data to server on sd [%d]: %s", fn, Server->conn->sd, strerror( errno ) );
+			return( -2 );
 		    }
 		    break;
 		}

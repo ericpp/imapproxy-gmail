@@ -1042,6 +1042,8 @@ extern ICD_Struct *Get_Server_conn( char *Username,
 	    ICC_Active->logouttime = 0;    /* zero means, "it's active". */
 	    ICC_Active->server_conn = Server.conn;
 	    
+	    Server.conn->ICC = ICC_Active;
+
 	    UnLockMutex( &mp );
 	    
 	    IMAPCount->InUseServerConnections++;

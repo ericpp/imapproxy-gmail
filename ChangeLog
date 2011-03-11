@@ -1,3 +1,10 @@
+2011-03-11  Paul Lesniewski <paul@squirrelmail.org>
+	* Fixed server connection synchronization issue that occurred when
+	  clients closed their connection immediately after logging in and
+	  associated security issue of closing such server connections
+	  without invalidating the connection in the internal connection
+          cache (thanks to Jose Celestino).
+
 2011-03-07  Paul Lesniewski <paul@squirrelmail.org>
 	* Added information about how to use squirrelmail-imap_proxy
 	  with servers that are only available via imaps

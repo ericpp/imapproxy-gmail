@@ -229,6 +229,7 @@ struct IMAPConnectionDescriptor
     SSL *tls;                        /* TLS connection context               */
 #endif
     struct IMAPSelectCache ISC;      /* Cached SELECT data                   */
+    struct IMAPConnectionContext *ICC; /* backreference the ICC */
     unsigned int reused;             /* Was the connection reused?           */
 };
 
@@ -356,7 +357,7 @@ extern void HandleRequest( int );
 extern char *memtok( char *, char *, char ** );
 extern int imparse_isatom( const char * );
 extern ICD_Struct *Get_Server_conn( char *, char *, const char *, const char *, unsigned char );
-extern void ICC_Logout( char *, ICD_Struct * );
+extern void ICC_Logout( ICC_Struct * );
 extern void ICC_Recycle( unsigned int );
 extern void ICC_Recycle_Loop( void );
 extern void LockMutex( pthread_mutex_t * );
