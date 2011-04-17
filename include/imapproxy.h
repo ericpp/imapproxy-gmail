@@ -356,7 +356,7 @@ extern int IMAP_Literal_Read( ITD_Struct * );
 extern void HandleRequest( int );
 extern char *memtok( char *, char *, char ** );
 extern int imparse_isatom( const char * );
-extern ICD_Struct *Get_Server_conn( char *, char *, const char *, const char *, unsigned char );
+extern ICD_Struct *Get_Server_conn( char *, char *, const char *, const char *, unsigned char, char * );
 extern void ICC_Logout( ICC_Struct * );
 extern void ICC_Recycle( unsigned int );
 extern void ICC_Recycle_Loop( void );

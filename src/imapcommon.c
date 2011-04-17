@@ -502,6 +502,11 @@ extern int Attempt_STARTTLS( ITD_Struct *Server )
  *              ptr to client port string (for logging only)
  *              unsigned char - flag to indicate that the client sent the
  *                              password as a string literal.
+ *              ptr to string that will be filled with the server's
+ *                            full response (minus tag) to a
+ *                            login/authentication request when available.
+ *                            NOTE: string must be allocated space at least
+ *                            as big as an ITD's ReadBuf (BUFSIZE)
  *
  * Returns:	ICD * on success
  *              NULL on failure
@@ -516,7 +521,8 @@ extern ICD_Struct *Get_Server_conn( char *Username,
 				    char *Password,
 				    const char *ClientAddr,
 				    const char *portstr,
-				    unsigned char LiteralPasswd )
+				    unsigned char LiteralPasswd,
+				    char *fullResponse )
 {
     char *fn = "Get_Server_conn()";
     unsigned int HashIndex;
@@ -991,16 +997,38 @@ extern ICD_Struct *Get_Server_conn( char *Username,
 	goto fail;
     }
     
+    // In order to give the full server response (minus the tag)
+    // back to the caller, we want to re-construct the ReadBuf
+    // starting at the location currently pointed to by tokenptr.
+    // Thus, we put back the last space that memtok() had replaced
+    // with a null characater (at location pointed to by last).
+    //
+    *last = ' ';
+
+    // Then we re-adjust endptr to point to the CR at the end of
+    // the line and set to NULL (a few lines below) so we can use
+    // the rest of the response information as a normal string
+    // 
+    endptr = memchr( last + 1, '\r', endptr - (last + 1) );
+
+    // No CR is unexpected; does this indicate malformed response?
+    // Probably.  Anyway, we'll just give up on finding any other
+    // info from the server.
+    //
+    if ( !endptr )
+	endptr = last;
+
+    *endptr = '\0';
+
+    // Put the response text into the fullResponse parameter for the caller
+    //
+    strcpy( fullResponse, tokenptr );
+
     if ( memcmp( (const void *)tokenptr, "OK", 2 ) )
     {
-	/*
-	 * If the server sent back a "NO" or "BAD", we can look at the actual
-	 * server logs to figure out why.  We don't have to break our ass here
-	 * putting the string back together just for the sake of logging.
-	 */
 	syslog( LOG_INFO,
-		"LOGIN: '%s' (%s:%s) failed: non-OK server response to LOGIN command",
-		Username, ClientAddr, portstr );
+		"LOGIN: '%s' (%s:%s) failed: non-OK server response to LOGIN command: %s",
+		Username, ClientAddr, portstr, fullResponse );
 	goto fail;
     }
     

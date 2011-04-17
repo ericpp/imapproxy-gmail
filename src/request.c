@@ -696,6 +696,7 @@ static int cmd_authenticate_login( ITD_Struct *Client,
     ICD_Struct *conn;
     int rc;
     ITD_Struct Server;
+    char fullServerResponse[BUFSIZE] = "\0";
     int BytesRead;
     struct sockaddr_storage cli_addr;
     int sockaddrlen;
@@ -831,7 +832,7 @@ static int cmd_authenticate_login( ITD_Struct *Client,
      * he needs to login.  This is just in case there are any special
      * characters in the password that we decoded.
      */
-    conn = Get_Server_conn( Username, Password, hostaddr, portstr, LITERAL_PASSWORD );
+    conn = Get_Server_conn( Username, Password, hostaddr, portstr, LITERAL_PASSWORD, fullServerResponse );
     
     /*
      * all the code from here to the end is basically identical to that
@@ -842,7 +843,19 @@ static int cmd_authenticate_login( ITD_Struct *Client,
     
     if ( conn == NULL )
     {
-	snprintf( SendBuf, BufLen, "%s NO AUTHENTICATE failed\r\n", Tag );
+	// When we get a NO or BAD, we'll relay the original/full
+	// server response to the client in case it contains anything
+	// useful (such as RFC 5530 response codes).  We'll use our
+	// own generic NO response otherwise (RFC 3501 doesn't allow
+	// other responses)
+	//
+	if ( !memcmp( (const void *)fullServerResponse, "NO", 2 )
+	  || !memcmp( (const void *)fullServerResponse, "BAD", 3 ) )
+	{
+	    snprintf( SendBuf, BufLen, "%s %s\r\n", Tag, fullServerResponse );
+	}
+	else
+	    snprintf( SendBuf, BufLen, "%s NO AUTHENTICATE failed\r\n", Tag );
 	
 	if ( IMAP_Write( Client->conn, SendBuf, strlen(SendBuf) ) == -1 )
 	{
@@ -868,7 +881,13 @@ static int cmd_authenticate_login( ITD_Struct *Client,
 	}
     }
     
-    snprintf( SendBuf, BufLen, "%s OK User authenticated\r\n", Tag );
+// TODO: under what circumstances do we want to pass through the server's full OK response? (usually a CAPABILITY string)
+    //if ( !memcmp( (const void *)fullServerResponse, "OK", 2 ) )
+    if (0)
+	snprintf( SendBuf, BufLen, "%s %s\r\n", Tag, fullServerResponse );
+    else
+	snprintf( SendBuf, BufLen, "%s OK User authenticated\r\n", Tag );
+
     if ( IMAP_Write( Client->conn, SendBuf, strlen( SendBuf ) ) == -1 )
     {
 	IMAPCount->InUseServerConnections--;
@@ -952,6 +971,7 @@ static int cmd_login( ITD_Struct *Client,
     ITD_Struct Server;
     int rc;
     ICD_Struct *conn;
+    char fullServerResponse[BUFSIZE] = "\0";
     struct sockaddr_storage cli_addr;
     int sockaddrlen;
     char hostaddr[INET6_ADDRSTRLEN], portstr[NI_MAXSERV];
@@ -977,7 +997,7 @@ static int cmd_login( ITD_Struct *Client,
 	return( -1 );
     }
     
-    conn = Get_Server_conn( Username, Password, hostaddr, portstr, LiteralLogin );
+    conn = Get_Server_conn( Username, Password, hostaddr, portstr, LiteralLogin, fullServerResponse );
 
     /*
      * wipe out the passwd so we don't have it sitting in memory somewhere.
@@ -990,8 +1010,20 @@ static int cmd_login( ITD_Struct *Client,
 	/*
 	 * All logging is done in Get_Server_conn, so don't bother to
 	 * log anything here.
+	 *
+	 * When we get a NO or BAD, we'll relay the original/full
+	 * server response to the client in case it contains anything
+	 * useful (such as RFC 5530 response codes).  We'll use our
+	 * own generic NO response otherwise (RFC 3501 doesn't allow
+	 * other responses)
 	 */
-	snprintf( SendBuf, BufLen, "%s NO LOGIN failed\r\n", Tag );
+	if ( !memcmp( (const void *)fullServerResponse, "NO", 2 )
+	  || !memcmp( (const void *)fullServerResponse, "BAD", 3 ) )
+	{
+	    snprintf( SendBuf, BufLen, "%s %s\r\n", Tag, fullServerResponse );
+	}
+	else
+	    snprintf( SendBuf, BufLen, "%s NO LOGIN failed\r\n", Tag );
 	
 	if ( IMAP_Write( Client->conn, SendBuf, strlen(SendBuf) ) == -1 )
 	{
@@ -1021,7 +1053,12 @@ static int cmd_login( ITD_Struct *Client,
      * Send a success message back to the client
      * and go into raw proxy mode.
      */
-    snprintf( SendBuf, BufLen, "%s OK User logged in\r\n", Tag );
+// TODO: under what circumstances do we want to pass through the server's full OK response? (usually a CAPABILITY string)
+    //if ( !memcmp( (const void *)fullServerResponse, "OK", 2 ) )
+    if (0)
+	snprintf( SendBuf, BufLen, "%s %s\r\n", Tag, fullServerResponse );
+    else
+	snprintf( SendBuf, BufLen, "%s OK User logged in\r\n", Tag );
     if ( IMAP_Write( Client->conn, SendBuf, strlen(SendBuf) ) == -1 )
     {
 	/*
@@ -1378,13 +1415,12 @@ static int Raw_Proxy( ITD_Struct *Client, ITD_Struct *Server,
 			    rc = Handle_Select_Command( Client, Server,
 							ISC, Client->ReadBuf,
 							status );
-//LEFT OFF HERE should this deal with ICC_INVALIDATE too???????????????????
 			    
 			    if ( rc == 0 )
 				continue;
 
-			    if ( rc == -1 )
-				return( -1 );
+			    if ( rc < 0 ) // -1 or -2
+				return( rc );
 
 			    /* 
 			     * if Handle_Select_Command() returned 1,

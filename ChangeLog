@@ -1,3 +1,10 @@
+2011-04-17  Paul Lesniewski <paul@squirrelmail.org>
+	* When NO or BAD response is returned from the server against
+	  a LOGIN or AUTHENTICATE request, we now log the full server
+	  response and pass it back to the client (useful if client
+	  is watching for RFC 5530 response codes).  See:
+	  http://thread.gmane.org/gmane.mail.squirrelmail.imapproxy/4
+
 2011-03-11  Paul Lesniewski <paul@squirrelmail.org>
 	* Fixed server connection synchronization issue that occurred when
 	  clients closed their connection immediately after logging in and
