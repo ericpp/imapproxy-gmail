@@ -1,4 +1,9 @@
 2011-04-17  Paul Lesniewski <paul@squirrelmail.org>
+        * Fixed server connection synchronization issues in the SELECT
+          cache code (ensure server failures result in server connections
+          being fully shut down and removed from connection cache).
+
+2011-04-17  Paul Lesniewski <paul@squirrelmail.org>
 	* When NO or BAD response is returned from the server against
 	  a LOGIN or AUTHENTICATE request, we now log the full server
 	  response and pass it back to the client (useful if client

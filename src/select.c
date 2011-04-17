@@ -97,8 +97,11 @@ static int Populate_Select_Cache( ITD_Struct *, ISC_Struct *, char *, char *, un
  *                   may be proxied directly to the server without the use of
  *                   this function.
  * 
- *              -1 - A hard failure condition.  The client and server sockets
+ *              -1 - A hard client failure condition.  The client socket
  *                   should be shut down.
+ *
+ *              -2 - A hard server failure condition.  The client and server
+ *                   sockets should both be shut down.
  *
  * Authors:      Dave McMurtrie <davemcmurtrie@hotmail.com>
  *
@@ -116,6 +119,7 @@ extern int Handle_Select_Command( ITD_Struct *Client,
     char *Mailbox;
     char *Tag;
     char *CP;
+    int rc;
 
     char Buf[ BUFSIZE ];
 
@@ -171,7 +175,11 @@ extern int Handle_Select_Command( ITD_Struct *Client,
 	
 	syslog( LOG_WARNING, "%s: Protocol error.  Client sd [%d] sent SELECT command with no mailbox name: '%s'", fn, Client->conn->sd, SelectCmd );
 	snprintf( Buf, sizeof Buf - 1, "%s BAD missing required argument to SELECT command\r\n", Tag );
-	IMAP_Write( Client->conn, Buf, strlen( Buf ) );
+	if ( IMAP_Write( Client->conn, Buf, strlen( Buf ) ) == -1 )
+	{
+	    syslog(LOG_ERR, "%s: IMAP_Write() failed sending data to client on sd [%d]: %s", fn, Client->conn->sd, strerror( errno ) );
+	    return( -1 );
+	}
 	return( 0 );
     }
 
@@ -188,17 +196,35 @@ extern int Handle_Select_Command( ITD_Struct *Client,
 	 */
 	IMAPCount->SelectCacheMisses++;
 	
-	if ( Populate_Select_Cache( Server, ISC, Mailbox, SelectCmd, SelectCmdLength ) == -1 )
+	rc = Populate_Select_Cache( Server, ISC, Mailbox, SelectCmd, SelectCmdLength );
+	if ( rc == -1 )
 	{
 	    return( 1 );
 	}
+	if ( rc == -2 )
+	{
+	    return( -2 );
+	}
 	
-	if ( Send_Cached_Select_Response( Client, ISC, Tag ) == -1 )
+	rc = Send_Cached_Select_Response( Client, ISC, Tag );
+	if ( rc == -2 )
+	{
+	    return( -1 );
+	}
+	if ( rc == -1 )
 	{
 	    snprintf( Buf, sizeof Buf - 1, "%s BAD internal proxy server error\r\n", Tag );
-	    IMAP_Write( Client->conn, Buf, strlen( Buf ) );
+	    if ( IMAP_Write( Client->conn, Buf, strlen( Buf ) ) == -1 )
+	    {
+		syslog(LOG_ERR, "%s: IMAP_Write() failed sending data to client on sd [%d]: %s", fn, Client->conn->sd, strerror( errno ) );
+		return( -1 );
+	    }
+
+	    // soft failure - we sent BAD response, so
+	    // now let client decide what to do next
+	    //
 	    return( 0 );
-	} 
+	}
 	
 	return( 0 );
     }
@@ -214,10 +240,23 @@ extern int Handle_Select_Command( ITD_Struct *Client,
 	 */
 	IMAPCount->SelectCacheHits++;
 	
-	if ( Send_Cached_Select_Response( Client, ISC, Tag ) == -1 )
+	rc = Send_Cached_Select_Response( Client, ISC, Tag );
+	if ( rc == -2 )
+	{
+	    return( -1 );
+	}
+	if ( rc == -1 )
 	{
 	    snprintf( Buf, sizeof Buf - 1, "%s BAD internal proxy server error\r\n", Tag );
-	    IMAP_Write( Client->conn, Buf, strlen( Buf ) );
+	    if ( IMAP_Write( Client->conn, Buf, strlen( Buf ) ) == -1 )
+	    {
+		syslog(LOG_ERR, "%s: IMAP_Write() failed sending data to client on sd [%d]: %s", fn, Client->conn->sd, strerror( errno ) );
+		return( -1 );
+	    }
+
+	    // soft failure - we sent BAD response, so
+	    // now let client decide what to do next
+	    //
 	    return( 0 );
 	}
 	
@@ -227,17 +266,35 @@ extern int Handle_Select_Command( ITD_Struct *Client,
 
     IMAPCount->SelectCacheMisses++;
     
-    if ( Populate_Select_Cache( Server, ISC, Mailbox, SelectCmd, SelectCmdLength ) == -1 )
+    rc = Populate_Select_Cache( Server, ISC, Mailbox, SelectCmd, SelectCmdLength );
+    if ( rc == -1 )
     {
 	return( 1 );
-    }	
+    }
+    if ( rc == -2 )
+    {
+	return( -2 );
+    }
     
-    if ( Send_Cached_Select_Response( Client, ISC, Tag ) == -1 )
+    rc = Send_Cached_Select_Response( Client, ISC, Tag );
+    if ( rc == -2 )
+    {
+	return( -1 );
+    }
+    if ( rc == -1 )
     {
 	snprintf( Buf, sizeof Buf - 1, "%s BAD internal proxy server error\r\n", Tag );
-	IMAP_Write( Client->conn, Buf, strlen( Buf ) );
+	if ( IMAP_Write( Client->conn, Buf, strlen( Buf ) ) == -1 )
+	{
+	    syslog(LOG_ERR, "%s: IMAP_Write() failed sending data to client on sd [%d]: %s", fn, Client->conn->sd, strerror( errno ) );
+	    return( -1 );
+	}
+
+	// soft failure - we sent BAD response, so
+	// now let client decide what to do next
+	//
 	return( 0 );
-    }	
+    }
     
     return( 0 );
     
@@ -255,7 +312,8 @@ extern int Handle_Select_Command( ITD_Struct *Client,
  *               ptr to char -- client tag for response
  *
  * Returns:      0 on success
- *               -1 on failure
+ *               -1 on soft failure
+ *               -2 on hard failure
  *
  * Authors:      Dave McMurtrie <davemcmurtrie@hotmail.com>
  *
@@ -273,7 +331,7 @@ static int Send_Cached_Select_Response( ITD_Struct *Client,
 		     strlen( ISC->SelectString ) ) == -1 )
     {
 	syslog( LOG_WARNING, "%s: Failed to send cached SELECT string to client on sd [%d]: %s", fn, Client->conn->sd, strerror( errno ) );
-	return( -1 );
+	return( -2 );
     }
     
     snprintf( SendBuf, sizeof SendBuf - 1, "%s %s", Tag, 
@@ -282,7 +340,7 @@ static int Send_Cached_Select_Response( ITD_Struct *Client,
     if ( IMAP_Write( Client->conn, SendBuf, strlen( SendBuf ) ) == -1 )
     {
 	syslog( LOG_WARNING, "%s: Failed to send cached SELECT status to client on sd [%d]: %s", fn, Client->conn->sd, strerror( errno ) );
-	return( -1 );
+	return( -2 );
     }
 
     return( 0 );
@@ -304,7 +362,8 @@ static int Send_Cached_Select_Response( ITD_Struct *Client,
  *               unsigned int -- the length of the select command
  *
  * Returns:      0 on success
- *               -1 on failure
+ *               -1 on soft failure
+ *               -2 on hard failure
  *
  * Authors:      Dave McMurtrie <davemcmurtrie@hotmail.com>
  *
@@ -329,7 +388,7 @@ static int Populate_Select_Cache( ITD_Struct *Server,
     if ( rc == -1 )
     {
 	syslog( LOG_ERR, "%s: Unable to send SELECT command to IMAP server so can't populate cache.", fn );
-	return( -1 );
+	return( -2 );
     }
 
     BufPtr = ISC->SelectString;
@@ -356,7 +415,7 @@ static int Populate_Select_Cache( ITD_Struct *Server,
 	if ( ( rc == -1 ) || ( rc == 0 ) )
 	{
 	    syslog( LOG_WARNING, "%s: Unable to read SELECT response from IMAP server so can't populate cache.", fn );
-	    return( -1 );
+	    return( -2 );
 	}
 	
 	/*
@@ -398,7 +457,7 @@ static int Populate_Select_Cache( ITD_Struct *Server,
     if ( ! EOS )
     {
 	syslog( LOG_ERR, "%s: Invalid response to SELECT command.  Not CRLF terminated.", fn );
-	return( -1 );
+	return( -2 );
     }
     
     *EOS = '\0';
