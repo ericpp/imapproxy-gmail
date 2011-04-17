@@ -696,7 +696,7 @@ static int cmd_authenticate_login( ITD_Struct *Client,
     ICD_Struct *conn;
     int rc;
     ITD_Struct Server;
-    char fullServerResponse[BUFSIZE] = "\0";
+    char fullServerResponse[BUFSIZE] = "\0\0\0";
     int BytesRead;
     struct sockaddr_storage cli_addr;
     int sockaddrlen;
@@ -971,7 +971,7 @@ static int cmd_login( ITD_Struct *Client,
     ITD_Struct Server;
     int rc;
     ICD_Struct *conn;
-    char fullServerResponse[BUFSIZE] = "\0";
+    char fullServerResponse[BUFSIZE] = "\0\0\0";
     struct sockaddr_storage cli_addr;
     int sockaddrlen;
     char hostaddr[INET6_ADDRSTRLEN], portstr[NI_MAXSERV];
