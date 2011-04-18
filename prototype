@@ -1,7 +1,7 @@
 i pkginfo
 i copyright
 v none /etc/imapproxy.conf=scripts/imapproxy.conf 0644 root sys
-f none /etc/init.d/imapproxy=scripts/imapproxy.init 0744 root sys
+f none /etc/init.d/imapproxy=scripts/imapproxy-linux.init 0744 root sys
 l none /etc/rc0.d/K10imapproxy=/etc/init.d/imapproxy
 l none /etc/rc1.d/K10imapproxy=/etc/init.d/imapproxy
 l none /etc/rc2.d/K10imapproxy=/etc/init.d/imapproxy
