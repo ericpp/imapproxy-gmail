@@ -38,7 +38,7 @@
 # Init file for squirrelmail-imap_proxy server daemon
 #
 # chkconfig: 2345 99 10
-# description:  Imapproxy Daemon 
+# description:  IMAP Proxy Daemon 
 #
 # processname: in.imapproxyd
 # config: /etc/imapproxy.conf
@@ -46,35 +46,53 @@
 Pgm=`/bin/basename $0`
 PROXY_BIN=/usr/local/sbin/in.imapproxyd
 
+
+start() {
+
+    # make sure the executable exists.
+
+    if [ ! -f $PROXY_BIN ]; then
+	/bin/echo "$Pgm: $PROXY_BIN does not exist.  Not starting IMAP proxy server." 1>&2
+	exit 1
+    fi
+
+    /bin/echo "$Pgm: Starting IMAP proxy server." 1>&2
+
+    $PROXY_BIN
+
+}
+
+
+stop() {
+
+    /bin/echo "$Pgm: Shutting down IMAP proxy server." 1>&2
+
+    pkill -x in.imapproxyd
+
+}
+
+
 case $1 in
 
     'start')
-
-	# make sure the executable exists.
-
-	if [ ! -f $PROXY_BIN ]; then
-	    /bin/echo "$Pgm: $PROXY_BIN does not exist.  Not starting IMAP proxy server." 1>&2
-	    exit 1
-	fi
-
-	/bin/echo "$Pgm: Starting IMAP proxy server." 1>&2
-
-	$PROXY_BIN
+	start
 	;;
 
 
 
     'stop')
-
-	/bin/echo "$Pgm: Shutting down IMAP proxy server." 1>&2
-
-	pkill -x in.imapproxyd
-
+	stop
 	;;
 
 
+    'restart')
+        stop
+        start
+        ;;
+
+
     *)
-	/bin/echo "usage: $Pgm {start|stop}" 1>&2
+	/bin/echo "usage: $Pgm {start|stop|restart}" 1>&2
 
 	exit 0
 
