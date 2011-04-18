@@ -35,7 +35,7 @@
 ##      Initial revision
 ##
 ##
-# Init file for squirrelmail-imap_proxy server daemon
+# Linux-style init file for squirrelmail-imap_proxy server daemon
 #
 # chkconfig: 2345 99 10
 # description:  IMAP Proxy Daemon 
