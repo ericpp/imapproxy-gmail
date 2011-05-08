@@ -393,6 +393,9 @@ extern void SetConfigOptions( char *ConfigFile )
     ADD_TO_TABLE( "cache_expiration_time", SetNumericValue, 
 		  &PC_Struct.cache_expiration_time, index );
 
+    ADD_TO_TABLE( "preauth_command", SetStringValue,
+		  &PC_Struct.preauth_command, index );
+
     ADD_TO_TABLE( "auth_sasl_plain_username", SetStringValue,
 		  &PC_Struct.auth_sasl_plain_username, index );
     
@@ -505,6 +508,24 @@ extern void SetConfigOptions( char *ConfigFile )
 	}
 	
 	Value = CP;
+
+	// we don't just want the next token, we want the rest of the line
+	// (put back the space that strtok() changed into a null character)
+	//
+	Value[ strlen( Value ) ] = ' ';
+
+	// however, we then have to be careful to remove trailing whitespace
+	//
+	i = strlen( Value ) - 1;
+	while ( ( Value[ i ] == ' ' )
+	     || ( Value[ i ] == '\t' )
+	     || ( Value[ i ] == '\r' )
+	     || ( Value[ i ] == '\n' ) )
+	{
+	    i--;
+	}
+	if ( i < ( strlen( Value ) - 1 ) )
+	    Value[ i + 1 ] = '\0';
 	
 	for (i = 0; ConfigTable[i].Keyword[0] != '\0'; i++ )
 	{
