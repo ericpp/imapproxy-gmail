@@ -1,11 +1,18 @@
 2011-04-17  Paul Lesniewski <paul@squirrelmail.org>
-        * Add restart operation to (linux) init script
-        * Add BSD-style init script (thanks to Emmanuel Dreyfus)
+	* Added configurable, arbitrary pre-authentication command
+	  that the administrator can use to send non-standard
+	  commands to the server before each user authenticates
+	  (for an example usage, see:
+	  http://en.wikipedia.org/wiki/Yahoo!_Mail#Free_IMAP_and_SMTPs_access )
 
 2011-04-17  Paul Lesniewski <paul@squirrelmail.org>
-        * Fixed server connection synchronization issues in the SELECT
-          cache code (ensure server failures result in server connections
-          being fully shut down and removed from connection cache).
+	* Add restart operation to (linux) init script
+	* Add BSD-style init script (thanks to Emmanuel Dreyfus)
+
+2011-04-17  Paul Lesniewski <paul@squirrelmail.org>
+	* Fixed server connection synchronization issues in the SELECT
+	  cache code (ensure server failures result in server connections
+	  being fully shut down and removed from connection cache).
 
 2011-04-17  Paul Lesniewski <paul@squirrelmail.org>
 	* When NO or BAD response is returned from the server against

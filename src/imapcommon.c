@@ -746,6 +746,116 @@ extern ICD_Struct *Get_Server_conn( char *Username,
 
 
     /*
+     * Send and validate pre-authentication command if given
+     */
+    if ( PC_Struct.preauth_command )
+    {
+	snprintf( SendBuf, BufLen, "P0001 %s\r\n", PC_Struct.preauth_command );
+	
+	if ( IMAP_Write( Server.conn, SendBuf, strlen(SendBuf) ) == -1 )
+	{
+	    syslog( LOG_INFO,
+		    "PREAUTH failed: IMAP_Write() failed attempting to send pre-authentication command to IMAP server: %s",
+		    strerror( errno ) );
+	    goto fail;
+	}
+    
+	// Read the server response
+	//
+	for ( ;; )
+	{
+	    if ( ( rc = IMAP_Line_Read( &Server ) ) == -1 )
+	    {
+		syslog( LOG_INFO,
+			"PREAUTH failed: No response from IMAP server after sending pre-authentication command (%s)",
+			PC_Struct.preauth_command );
+		goto fail;
+	    }
+
+	    if ( Server.LiteralBytesRemaining )
+	    {
+		syslog(LOG_ERR, "%s: Unexpected string literal in server pre-authentication response.", fn );
+		goto fail;
+	    }
+	
+	    if ( Server.ReadBuf[0] != '*' )
+		break;
+	}
+    
+    
+	// Try to match up the tag in the server response to the client tag.
+	//
+	endptr = Server.ReadBuf + rc;
+    
+	tokenptr = memtok( Server.ReadBuf, endptr, &last );
+    
+	if ( !tokenptr )
+	{
+
+	    // no tokens found in server response?  Not likely, but we still
+	    // have to check.
+	    //
+	    syslog( LOG_INFO, "PREAUTH failed: server response to pre-authentication command contained no tokens." );
+	    goto fail;
+	}
+    
+	if ( memcmp( (const void *)tokenptr, (const void *)"P0001", strlen( tokenptr ) ) )
+	{
+
+	    // non-matching tag read back from the server... Lord knows what this
+	    // is, so we'll fail.
+	    //
+	    syslog( LOG_INFO, "PREAUTH failed: server response to pre-authentication command contained non-matching tag." );
+	    goto fail;
+	}
+    
+    
+	// Now that we've matched the tags up, see if the response was 'OK'
+	//
+	tokenptr = memtok( NULL, endptr, &last );
+    
+	if ( !tokenptr )
+	{
+	    // again, not likely but we still have to check... 
+	    //
+	    syslog( LOG_INFO, "PREAUTH failed: Malformed server response to pre-authentication command" );
+	    goto fail;
+	}
+    
+	if ( memcmp( (const void *)tokenptr, "OK", 2 ) )
+	{
+	    // In order to log the full server response (minus the tag),
+	    // we want to re-construct the ReadBuf starting at the location
+	    // currently pointed to by tokenptr.  Thus, we put back the
+	    // last space that memtok() had replaced with a null characater
+	    // (at location pointed to by last).
+	    //
+	    *last = ' ';
+
+	    // Then we re-adjust endptr to point to the CR at the end of
+	    // the line and set to NULL (a few lines below) so we can use
+	    // the rest of the response information as a normal string
+	    // 
+	    endptr = memchr( last + 1, '\r', endptr - (last + 1) );
+
+	    // No CR is unexpected; does this indicate malformed response?
+	    // Probably.  Anyway, we'll just give up on finding any other
+	    // info from the server.
+	    //
+	    if ( !endptr )
+	    endptr = last;
+
+	    *endptr = '\0';
+
+	    syslog( LOG_INFO,
+		"PREAUTH failed: non-OK server response to pre-authentication command (%s): %s",
+		PC_Struct.preauth_command, tokenptr );
+	    goto fail;
+	}
+    }
+    
+
+    /*
      * If configured to do so, execute SASL PLAIN authentication
      * using the static authentication username and password from
      * configuration (auth_sasl_plain_username/auth_sasl_plain_password).
