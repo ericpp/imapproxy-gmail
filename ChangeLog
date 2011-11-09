@@ -1,3 +1,7 @@
+2011-11-09  Paul Lesniewski <paul@squirrelmail.org>
+	* Fixed minor bug where too many spaces were added before
+          XIMAPPROXY in the CAPABILITY string (thanks to Kirill Miazine)
+
 2011-04-17  Paul Lesniewski <paul@squirrelmail.org>
 	* Added configurable, arbitrary pre-authentication command
 	  that the administrator can use to send non-standard

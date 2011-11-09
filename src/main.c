@@ -1078,7 +1078,6 @@ static int ParseBannerAndCapability( char *DestBuf,
 	     */
 	    endbracket = 0;
  	    inCap = 0;
-	    strcat( DestBuf, " " );
 	    strcat( DestBuf, " XIMAPPROXY]" );
 
 	    continue;
