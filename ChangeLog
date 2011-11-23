@@ -1,3 +1,6 @@
+2011-11-23  Paul Lesniewski <paul@squirrelmail.org>
+	* Added DESTDIR support to install scripts (thanks to Brad Smith)
+
 2011-11-09  Paul Lesniewski <paul@squirrelmail.org>
 	* Fixed minor bug where too many spaces were added before
           XIMAPPROXY in the CAPABILITY string (thanks to Kirill Miazine)
@@ -11,6 +14,7 @@
 
 2011-04-17  Paul Lesniewski <paul@squirrelmail.org>
 	* Add restart operation to (linux) init script
+
 	* Add BSD-style init script (thanks to Emmanuel Dreyfus)
 
 2011-04-17  Paul Lesniewski <paul@squirrelmail.org>

@@ -50,7 +50,7 @@ install -d $RPM_BUILD_ROOT/etc
 install -d $RPM_BUILD_ROOT/etc/init.d
 install -d $RPM_BUILD_ROOT/%{prefix}/sbin
 
-make prefix=$RPM_BUILD_ROOT%{prefix} rpm_prefix=$RPM_BUILD_ROOT  rpm-install
+make DESTDIR=$RPM_BUILD_ROOT rpm-install
 
 %clean
 rm -rf $RPM_BUILD_ROOT
