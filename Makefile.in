@@ -4,7 +4,7 @@
 # Fixed to work with configure script
 # by Devrim SERAL <devrim@gazi.edu.tr>
 
-# Cleaned up by Ken Murchison
+# Cleaned up by Ken Murchison, Brad Smith
 
 ## Tuneables
 
@@ -23,11 +23,12 @@ libdir = $(prefix)/lib/gnudl
 mandir = $(prefix)/man/man3
 
 CC = @CC@
-CPPFLAGS = @CPPFLAGS@ 
+CPPFLAGS = @CPPFLAGS@
+CFLAGS = @CFLAGS@
 LDFLAGS = @LDFLAGS@
 LIBS = @LIBS@
 DEFINES = @DEFINES@
-FLAGS = $(CPPFLAGS) @CFLAGS@ -I. -I./include
+FLAGS = -I. -I./include
 
 INSTALL = @INSTALL@
 EBIN = $(sbindir)
@@ -63,7 +64,7 @@ all: $(XYD_BIN) $(TAT_BIN)
 $(XYD_OBJ) $(TAT_OBJ): $(MAKEFILE) ./include/common.h ./include/imapproxy.h
 
 .c.o:
-	$(CC) $(CFLAGS) $(FLAGS) -c -o $@ $<
+	$(CC) $(CFLAGS) $(FLAGS) $(CPPFLAGS) -c -o $@ $<
 
 $(XYD_BIN): $(XYD_OBJ)
 	$(CC) -o $@ $(XYD_OBJ) $(LDFLAGS) $(XYD_LIB)

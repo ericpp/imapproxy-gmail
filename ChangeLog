@@ -1,3 +1,7 @@
+2011-12-16  Paul Lesniewski <paul@squirrelmail.org>
+	* Minor Makefile cleanup complements Brad Smith
+	* Fixed header include issue for OpenBSD (thanks to Brad Smith)
+
 2011-11-23  Paul Lesniewski <paul@squirrelmail.org>
 	* Added DESTDIR support to install scripts (thanks to Brad Smith)
 
