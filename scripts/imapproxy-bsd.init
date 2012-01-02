@@ -1,6 +1,6 @@
 #!/bin/sh
 ##
-## Copyright (c) 2010-2011 The SquirrelMail Project Team
+## Copyright (c) 2010-2012 The SquirrelMail Project Team
 ##
 ## Licensed under the GNU GPL. For full terms see the file COPYING.
 ##
@@ -20,7 +20,7 @@
 ##
 ##  Version:
 ##
-##      $Id:$
+##      $Id$
 ##
 ##  Modification History:
 ##
