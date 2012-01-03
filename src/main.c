@@ -442,57 +442,57 @@ int main( int argc, char *argv[] )
 
 
 #if HAVE_LIBSSL
-    /*
-     * If we're going to support using STARTTLS to connect
-     * to the server, at a minimum we need a CA file (or path)
-     */
-    if ( PC_Struct.tls_ca_file || PC_Struct.tls_ca_path )
+    /* Initialize SSL_CTX */
+    syslog( LOG_INFO, "%s: Enabling openssl library.", fn );
+    SSL_library_init();
+
+    /* Set up OpenSSL thread protection */
+    ssl_thread_setup(fn);
+
+    /* Need to seed PRNG, too! */
+    if ( RAND_egd( ( RAND_file_name( f_randfile, sizeof( f_randfile ) ) == f_randfile ) ? f_randfile : "/.rnd" ) )
     {
-	/* Initialize SSL_CTX */
-	syslog( LOG_INFO, "%s: Enabling openssl library.", fn );
-	SSL_library_init();
-
-	/* Set up OpenSSL thread protection */
-	ssl_thread_setup(fn);
-
-	/* Need to seed PRNG, too! */
-	if ( RAND_egd( ( RAND_file_name( f_randfile, sizeof( f_randfile ) ) == f_randfile ) ? f_randfile : "/.rnd" ) )
-	{
-	    /* Not an EGD, so read and write it. */
-	    if ( RAND_load_file( f_randfile, -1 ) )
-	    RAND_write_file( f_randfile );
-	}
-
-	SSL_load_error_strings();
-	tls_ctx = SSL_CTX_new( TLSv1_client_method() );
-	if ( tls_ctx == NULL )
-	{ 
-	    syslog(LOG_ERR, "%s: Failed to create new SSL_CTX.  Exiting.", fn);
-	    exit( 1 );
-	}
- 
-	/* Work around all known bugs */
-	SSL_CTX_set_options( tls_ctx, SSL_OP_ALL );
- 
-	if ( ! SSL_CTX_load_verify_locations( tls_ctx,
-						PC_Struct.tls_ca_file,
-						PC_Struct.tls_ca_path ) ||
-	    ! SSL_CTX_set_default_verify_paths( tls_ctx ) )
-	{ 
-	    syslog(LOG_ERR, "%s: Failed to load CA data.  Exiting.", fn);
-	    exit( 1 );
-	}
- 
-	if ( ! set_cert_stuff( tls_ctx,
-				PC_Struct.tls_cert_file,
-				PC_Struct.tls_key_file ) )
-	{ 
-	    syslog(LOG_ERR, "%s: Failed to load cert/key data.  Exiting.", fn);
-	    exit( 1 );
-	}
-
-	SSL_CTX_set_verify(tls_ctx, SSL_VERIFY_NONE, verify_callback);
+	/* Not an EGD, so read and write it. */
+	if ( RAND_load_file( f_randfile, -1 ) )
+	RAND_write_file( f_randfile );
     }
+
+    SSL_load_error_strings();
+    tls_ctx = SSL_CTX_new( TLSv1_client_method() );
+    if ( tls_ctx == NULL )
+    { 
+	syslog(LOG_ERR, "%s: Failed to create new SSL_CTX.  Exiting.", fn);
+	exit( 1 );
+    }
+ 
+    /* Work around all known bugs */
+    SSL_CTX_set_options( tls_ctx, SSL_OP_ALL );
+ 
+    if ( PC_Struct.tls_ca_file != NULL || PC_Struct.tls_ca_path != NULL )
+    {
+	rc = SSL_CTX_load_verify_locations( tls_ctx,
+					    PC_Struct.tls_ca_file,
+					    PC_Struct.tls_ca_path );
+    }
+    else
+    {
+	rc = SSL_CTX_set_default_verify_paths( tls_ctx );
+    }
+    if ( rc == 0 )
+    { 
+	syslog(LOG_ERR, "%s: Failed to load CA data.  Exiting.", fn);
+	exit( 1 );
+    }
+ 
+    if ( ! set_cert_stuff( tls_ctx,
+			    PC_Struct.tls_cert_file,
+			    PC_Struct.tls_key_file ) )
+    { 
+	syslog(LOG_ERR, "%s: Failed to load cert/key data.  Exiting.", fn);
+	exit( 1 );
+    }
+
+    SSL_CTX_set_verify(tls_ctx, SSL_VERIFY_NONE, verify_callback);
 #endif /* HAVE_LIBSSL */
 
 

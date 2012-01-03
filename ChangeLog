@@ -1,3 +1,8 @@
+2012-01-01  Paul Lesniewski <paul@squirrelmail.org>
+	* Fixed problem where default TLS CA data would never
+	  be loaded (thanks to Orion Poplawski)
+	* Fixed bug in SSL context initialization
+
 2011-12-16  Paul Lesniewski <paul@squirrelmail.org>
 	* Minor Makefile cleanup complements Brad Smith
 	* Fixed header include issue for OpenBSD (thanks to Brad Smith)
