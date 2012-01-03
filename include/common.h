@@ -71,7 +71,7 @@
 
 
 #define HASH_TABLE_SIZE         1024
-#define IMAP_PROXY_VERSION      "1.2.7"
+#define IMAP_PROXY_VERSION      "1.2.8 [SVN]"
 
 /*
  * Misc. function prototypes.

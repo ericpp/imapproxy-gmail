@@ -1,6 +1,6 @@
 #This is squirrelmail-imap_proxy rpm spec file
 
-%define ver	1.2.7
+%define ver	1.2.8 [SVN]
 %define rel	1
 %define prefix	/usr/local
 
