@@ -1,6 +1,6 @@
 /*
 **
-** Copyright (c) 2010-2012 The SquirrelMail Project Team
+** Copyright (c) 2010-2013 The SquirrelMail Project Team
 ** Copyright (c) 2002-2010 Dave McMurtrie
 **
 ** Licensed under the GNU GPL. For full terms see the file COPYING.
