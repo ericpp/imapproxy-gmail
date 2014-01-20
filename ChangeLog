@@ -1,3 +1,9 @@
+2014-01-20  Paul Lesniewski <paul@squirrelmail.org>
+	* Added support for up to TLS v1.2 (thanks to Emmanuel Dreyfus)
+	* Added support for ECDHE ciphers (thanks to Emmanuel Dreyfus)
+	* Added ability to manually specify TLS ciphers (thanks to Emmanuel Dreyfus)
+	* Added server certificate validation (thanks to Emmanuel Dreyfus)
+
 2012-01-01  Paul Lesniewski <paul@squirrelmail.org>
 	* Fixed problem where default TLS CA data would never
 	  be loaded (thanks to Orion Poplawski)

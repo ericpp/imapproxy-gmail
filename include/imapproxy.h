@@ -294,6 +294,11 @@ struct ProxyConfig
     char *tls_ca_path;                        /* path to directory CA certs */
     char *tls_cert_file;                      /* file with client cert */
     char *tls_key_file;                       /* file with client priv key */
+    char *tls_ciphers;                        /* TLS Cipher suite */
+    unsigned int tls_verify_server;           /* flag to require server cert validation */
+    unsigned int tls_no_tlsv1;                /* flag to disable TLSv1 */
+    unsigned int tls_no_tlsv1_1;              /* flag to disable TLSv1.1 */
+    unsigned int tls_no_tlsv1_2;              /* flag to disable TLSv1.2 */
     unsigned int force_tls;                   /* flag to force TLS */
     unsigned int enable_admin_commands;       /* flag to enable admin cmds */
     unsigned char support_unselect;           /* unselect support flag */

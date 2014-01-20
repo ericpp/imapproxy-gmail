@@ -302,6 +302,9 @@ int main( int argc, char *argv[] )
 #ifdef HAVE_LIBWRAP
     struct request_info r;             /* request struct for libwrap */
 #endif
+#if HAVE_LIBSSL
+    int tls_options;
+#endif
     struct addrinfo aihints, *ai;
     int gaierrnum;
 
@@ -458,15 +461,33 @@ int main( int argc, char *argv[] )
     }
 
     SSL_load_error_strings();
-    tls_ctx = SSL_CTX_new( TLSv1_client_method() );
+
+    /* 
+     * Despite its name, SSLv23_client_method() negociates highest
+     * version possible, which includes TLSv1.0, TLSv1.1, and TLSv1.2. 
+     * SSLv2 and SSLv3 are disabled using SSL_OP_NO_SSLv2 and 
+     * SSL_OP_NO_SSLv3 below.
+     */ 
+    tls_ctx = SSL_CTX_new( SSLv23_client_method() );
     if ( tls_ctx == NULL )
     { 
 	syslog(LOG_ERR, "%s: Failed to create new SSL_CTX.  Exiting.", fn);
 	exit( 1 );
     }
  
-    /* Work around all known bugs */
-    SSL_CTX_set_options( tls_ctx, SSL_OP_ALL );
+    /* Work around all known bugs, disable SSLv2 and SSLv3 */
+    tls_options = SSL_OP_ALL | SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3;
+
+    if ( PC_Struct.tls_no_tlsv1 ) 
+        tls_options |= SSL_OP_NO_TLSv1;
+
+    if ( PC_Struct.tls_no_tlsv1_1 ) 
+        tls_options |= SSL_OP_NO_TLSv1_1;
+
+    if ( PC_Struct.tls_no_tlsv1_2 ) 
+        tls_options |= SSL_OP_NO_TLSv1_2;
+
+    SSL_CTX_set_options( tls_ctx, tls_options );
  
     if ( PC_Struct.tls_ca_file != NULL || PC_Struct.tls_ca_path != NULL )
     {
@@ -492,7 +513,26 @@ int main( int argc, char *argv[] )
 	exit( 1 );
     }
 
-    SSL_CTX_set_verify(tls_ctx, SSL_VERIFY_NONE, verify_callback);
+    if ( PC_Struct.tls_verify_server ) 
+        SSL_CTX_set_verify(tls_ctx, SSL_VERIFY_PEER, verify_callback);
+    else
+        SSL_CTX_set_verify(tls_ctx, SSL_VERIFY_NONE, verify_callback);
+
+    if ( PC_Struct.tls_ciphers != NULL )
+    {
+        SSL_CTX_set_cipher_list( tls_ctx, PC_Struct.tls_ciphers );    
+    }
+
+    /* Enable ECDHE is OpenSSL has it */
+#ifdef NID_X9_62_prime256v1
+    {
+        EC_KEY *ecdh;
+
+        ecdh = EC_KEY_new_by_curve_name( NID_X9_62_prime256v1 );
+        SSL_CTX_set_tmp_ecdh( tls_ctx, ecdh );
+        EC_KEY_free( ecdh );
+    }
+#endif
 #endif /* HAVE_LIBSSL */
 
 

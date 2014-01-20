@@ -22,9 +22,18 @@ to that server and let squirrelmail-imap_proxy talk to the local (plaintext)
 end of that tunnel (in which case, no SSL setup is required for
 squirrelmail-imap_proxy).
 
-There are four configuration file options that you'll have to set in order
-for SSL to work.  They are tls_ca_file, tls_ca_path, tls_cert_file and
-tls_key_file.
+Here are the options related to SSL configuration:
+tls_ca_file        Path to CA file
+tls_ca_path        Path to CA directory
+tls_cert_file      Path to client certificate file
+tls_key_file       Path to client private key
+tls_verify_server  Enforce server certificate validation (default is false)
+tls_ciphers        Specify cipher suite as documented in openssl_ciphers(1)
+tls_no_tlsv1       Disable TLSv1.0 (default is false)
+tls_no_tlsv1.1     Disable TLSv1.1 (default is false)
+tls_no_tlsv1.2     Disable TLSv1.2 (default is false)
+force_tls          Force TLS usage (default is false)
+
 
 I haven't had time to write my own ssl tuturial (and I might never) but you
 can find a wealth of information here:

@@ -164,6 +164,36 @@ tls_key_file
 File containing the private key belonging to the client certificate.  See
 README.ssl for more information.
 
+tls_verify_server
+-----------------
+Indicates that the server's TLS certificate must be verified.  See
+README.ssl for more information.
+
+tls_ciphers
+-----------
+Allows you to manually specify TLS cipher suite as documented in openssl
+ciphers(1).  See README.ssl for more information.
+
+tls_no_tlsv1
+------------
+Prevents the usage of TLS v1 (SSL v2 and v3 are already forbidden, which
+is hard coded).  See README.ssl for more information.
+
+tls_no_tlsv1.1
+--------------
+Prevents the usage of TLS v1.1 (SSL v2 and v3 are already forbidden, which
+is hard coded).  See README.ssl for more information.
+
+tls_no_tlsv1.2
+--------------
+Prevents the usage of TLS v1.2 (SSL v2 and v3 are already forbidden, which
+is hard coded).  See README.ssl for more information.
+
+force_tls
+---------
+Requires STARTTLS support by the server (won't use unsecured connections).
+See README.ssl for more information.
+
 enable_select_cache
 -------------------
 Allows SELECT data caching to be enabled or disabled.

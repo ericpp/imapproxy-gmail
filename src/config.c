@@ -435,6 +435,21 @@ extern void SetConfigOptions( char *ConfigFile )
     ADD_TO_TABLE( "tls_key_file", SetStringValue,
 		  &PC_Struct.tls_key_file, index );
 
+    ADD_TO_TABLE( "tls_ciphers", SetStringValue,
+		  &PC_Struct.tls_ciphers, index );
+
+    ADD_TO_TABLE( "tls_verify_server", SetBooleanValue,
+		  &PC_Struct.tls_verify_server, index );
+
+    ADD_TO_TABLE( "tls_no_tlsv1", SetBooleanValue,
+		  &PC_Struct.tls_no_tlsv1, index );
+
+    ADD_TO_TABLE( "tls_no_tlsv1.1", SetBooleanValue,
+		  &PC_Struct.tls_no_tlsv1_1, index );
+
+    ADD_TO_TABLE( "tls_no_tlsv1.2", SetBooleanValue,
+		  &PC_Struct.tls_no_tlsv1_2, index );
+
     ADD_TO_TABLE( "send_tcp_keepalives", SetBooleanValue,
 		  &PC_Struct.send_tcp_keepalives, index );
 
