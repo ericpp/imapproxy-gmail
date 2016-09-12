@@ -88,6 +88,9 @@ install-init-linux:
 	ln -s ../init.d/imapproxy $(DESTDIR)/etc/rc2.d/S99imapproxy
 	ln -s ../init.d/imapproxy $(DESTDIR)/etc/rc0.d/K10imapproxy
 
+install-init-systemd:
+	$(INSTALL) -o root -g root -m 0644 ./scripts/imap_proxy.service $(DESTDIR)/lib/systemd/system
+
 install-conf:
 	$(INSTALL) -o root -g bin -m 0644 ./scripts/imapproxy.conf $(DESTDIR)$(ETC)
 

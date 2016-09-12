@@ -1,0 +1,13 @@
+[Unit]
+Description=SquirrelMail IMAP proxy server
+After=network.target network-online.target local-fs.target syslog.target remote-fs.target
+
+[Service]
+Type=forking
+ExecStart=/usr/local/sbin/in.imapproxyd
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
+

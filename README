@@ -42,6 +42,10 @@ a bug report.
 
 /etc/imapproxy.conf
 
+"make install-init-systemd" will attempt to install the systemd startup script:
+
+/lib/systemd/system/imap_proxy.service
+
 "make install-init" will attempt to install the startup script and symlinks:
 
 /etc/init.d/imapproxy
