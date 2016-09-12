@@ -969,7 +969,11 @@ void Daemonize( const char* pidfile )
  int i;
 
     /* detach from our parent if necessary */
-    if (! (getppid() == 1) && ( ! PC_Struct.foreground_mode ) )
+    // NOTE: When started under systemd, the parent PID is already 1, so
+    //       the safety check below of the parent PID causes imap_proxy
+    //       to start in foreground mode. I'm commenting it out, hoping
+    //       it doesn't cause issues in other contexts
+    if (/*! (getppid() == 1) &&*/ ( ! PC_Struct.foreground_mode ) )
     {
 	syslog( LOG_INFO, "%s: Configured to run in background mode.", fn );
 
