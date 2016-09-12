@@ -52,8 +52,8 @@ a bug report.
 
 After you successfully build the proxy server, you'll need to edit the
 global configuration file to suit your needs.  By default, the proxy
-server looks at /etc/imapproxy.conf as his default configuration file.  You
-can change this at runtime by supplying the -f argument to
+server looks at /etc/imapproxy.conf as its default configuration file.
+You can change this at runtime by supplying the -f argument to
 /usr/local/sbin/in.imapproxyd.
 
 /usr/local/sbin/pimpstat is the Polling Imap Mail Proxy Statistical tool.  It's
