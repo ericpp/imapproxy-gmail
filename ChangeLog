@@ -1,3 +1,6 @@
+2016-09-12  Paul Lesniewski <paul@squirrelmail.org>
+	* Added support for systemd startup
+
 2014-01-20  Paul Lesniewski <paul@squirrelmail.org>
 	* Added support for up to TLS v1.2 (thanks to Emmanuel Dreyfus)
 	* Added support for ECDHE ciphers (thanks to Emmanuel Dreyfus)
@@ -18,7 +21,7 @@
 
 2011-11-09  Paul Lesniewski <paul@squirrelmail.org>
 	* Fixed minor bug where too many spaces were added before
-          XIMAPPROXY in the CAPABILITY string (thanks to Kirill Miazine)
+	  XIMAPPROXY in the CAPABILITY string (thanks to Kirill Miazine)
 
 2011-04-17  Paul Lesniewski <paul@squirrelmail.org>
 	* Added configurable, arbitrary pre-authentication command
@@ -29,7 +32,6 @@
 
 2011-04-17  Paul Lesniewski <paul@squirrelmail.org>
 	* Add restart operation to (linux) init script
-
 	* Add BSD-style init script (thanks to Emmanuel Dreyfus)
 
 2011-04-17  Paul Lesniewski <paul@squirrelmail.org>
@@ -49,7 +51,7 @@
 	  clients closed their connection immediately after logging in and
 	  associated security issue of closing such server connections
 	  without invalidating the connection in the internal connection
-          cache (thanks to Jose Celestino).
+	  cache (thanks to Jose Celestino).
 
 2011-03-07  Paul Lesniewski <paul@squirrelmail.org>
 	* Added information about how to use squirrelmail-imap_proxy
@@ -57,47 +59,45 @@
 
 2011-01-16  Paul Lesniewski <paul@squirrelmail.org>
 	* Added the ability to authenticate to the IMAP server
-          using SASL plain authentication with fixed authentication
-          credentials (thanks to Jeffrey Arbuckle and Martin Smith)
+	  using SASL plain authentication with fixed authentication
+	  credentials (thanks to Jeffrey Arbuckle and Martin Smith)
 
 2010-10-29  Paul Lesniewski <paul@squirrelmail.org>
 	* Fixed compilation warnings when openssl is not available.
 
 2010-10-28  Paul Lesniewski <paul@squirrelmail.org>
 	* Increased default buffer sizes.
-
 	* Fixed possible buffer overflow issue and a few other small
-          issues, complements Jose Celestino.  Thanks also to Tomas
-          Lindroos.
-
+	  issues, complements Jose Celestino.  Thanks also to Tomas
+	  Lindroos.
 	* Fixed LOGIN command so that it handles literal arguments
-          correctly.
+	  correctly.
 
 2010-08-19  Paul Lesniewski <paul@squirrelmail.org>
 	* Added several warnings that try to catch the case where someone
-          tries to set the server_port to 993, which is usually a mistaken
-          use of TLS/SSL (port 993 is usually for imaps, which is not
-          supported; IMAP Proxy supports STARTTLS from a "normal" port,
-          which is usually 143)
+	  tries to set the server_port to 993, which is usually a mistaken
+	  use of TLS/SSL (port 993 is usually for imaps, which is not
+	  supported; IMAP Proxy supports STARTTLS from a "normal" port,
+	  which is usually 143)
 
 2010-07-26  Paul Lesniewski <paul@squirrelmail.org>
 	* Updated copyrights and other administrative actions related to
-          the adoption of this software by the SquirrelMail Project
+	  the adoption of this software by the SquirrelMail Project
 
 2010-02-20  Dave McMurtrie  <davemcmurtrie@gmail.com>
 	* common.h: Updated version to 1.2.7
 
 2009-10-16  Dave McMurtrie  <davemcmurtrie@gmail.com>
 	* main.c: Applied patch by Jose Luis Tallon to fix compiler warnings.
-          Applied patch by Jose Luis Tallon to provide for default config
+	  Applied patch by Jose Luis Tallon to provide for default config
 	  options.  Applied patch by Jose Luis Tallon to improve server
 	  connect retry logic.
 
 	* request.c: Applied patch by Jose Luis Tallon to fix compiler
-          warnings.
+	  warnings.
 
 	* select.c: Applied patch by Jose Luis Tallon to fix broken syslog
-          call.
+	  call.
 
 	* config.c: Applied patch by Jose Luis Tallon to provide for default
 	  config options.  Applied patch by Jose Luis Tallon to improve server
