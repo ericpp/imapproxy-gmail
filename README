@@ -360,6 +360,44 @@ S: * XPROXY_VERSION 1.2.6
 S: a001 OK Completed
 
 
+ID
+--
+This is not a command specific to squirrelmail-imap_proxy, rather it
+comes from RFC 2971.  It is listed here because the ID command may
+be sent before the client authenticates, which means the proxy server
+handles it - sort of.  Any ID commands still need to be sent to the
+IMAP server, so the proxy responds with a fake "OK" and queues the ID
+commands to be sent once a LOGIN or AUTHENTICATE is received from the
+client and a server connection is (re)established.
+
+Usage:
+  <tag> ID [(parameter list)]
+
+  [(parameter list)] = (OPTIONAL) Parameters to be sent to IMAP server
+
+  See RFC 2971.
+
+Examples:
+C: a001 ID
+S: a001 OK Completed
+
+C: a001 ID ("x-originating-ip" "10.10.1.2")
+S: a001 OK Completed
+
+Responses above from the proxy server are faked and do not necessarily
+indicate that the IMAP server will accept the ID commands.  If an ID
+command fails when sent to the IMAP server, the proxy server will log
+a problem that includes the string "QUEUED PREAUTH failed".
+
+Any ID commands sent by the client AFTER login/authentication are
+always sent directly through to the IMAP server and are never handled
+by the proxy server.
+
+NOTE: Currently only the last ID command received before client login
+is remembered and relayed to the server.  Please let us know if you
+find this insufficient.
+
+
 
 Happy proxying,
 

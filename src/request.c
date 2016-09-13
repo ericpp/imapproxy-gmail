@@ -180,8 +180,8 @@ extern ProxyConfig_Struct PC_Struct;
 static int cmd_noop( ITD_Struct *, char * );
 static int cmd_logout( ITD_Struct *, char * );
 static int cmd_capability( ITD_Struct *, char * );
-static int cmd_authenticate_login( ITD_Struct *, char * );
-static int cmd_login( ITD_Struct *, char *, char *, int, char *, unsigned char );
+static int cmd_authenticate_login( ITD_Struct *, char *, char * );
+static int cmd_login( ITD_Struct *, char *, char *, int, char *, unsigned char, char * );
 static int cmd_trace( ITD_Struct *, char *, char * );
 static int cmd_dumpicc( ITD_Struct *, char * );
 static int cmd_newlog( ITD_Struct *, char * );
@@ -674,6 +674,8 @@ static int cmd_capability( ITD_Struct *itd, char *Tag )
  *
  * Parameters:	ptr to ITD_Struct for client connection.
  *              ptr to client tag
+TODO: change this in the future to be a linked list:
+ *              ptr to a single queued pre-auth command string
  *
  * Returns:	0 on success prior to authentication
  *              1 on success after authentication (we caught a logout)
@@ -685,7 +687,8 @@ static int cmd_capability( ITD_Struct *itd, char *Tag )
  *--
  */
 static int cmd_authenticate_login( ITD_Struct *Client,
-				   char *Tag )
+				   char *Tag,
+				   char *QueuedPreauthCommand )
 {
     char *fn = "cmd_authenticate_login()";
     char SendBuf[BUFSIZE];
@@ -832,7 +835,7 @@ static int cmd_authenticate_login( ITD_Struct *Client,
      * he needs to login.  This is just in case there are any special
      * characters in the password that we decoded.
      */
-    conn = Get_Server_conn( Username, Password, hostaddr, portstr, LITERAL_PASSWORD, fullServerResponse );
+    conn = Get_Server_conn( Username, Password, hostaddr, portstr, LITERAL_PASSWORD, fullServerResponse, QueuedPreauthCommand );
     
     /*
      * all the code from here to the end is basically identical to that
@@ -941,6 +944,8 @@ static int cmd_authenticate_login( ITD_Struct *Client,
  *              ptr to client tag
  *              unsigned char - flag to indicate literal password in login
  *                              command.
+TODO: change this in the future to be a linked list:
+ *              ptr to a single queued pre-auth command string
  *
  * Returns:	0 on success prior to authentication
  *              1 on success after authentication (we caught a logout)
@@ -963,7 +968,8 @@ static int cmd_login( ITD_Struct *Client,
 		      char *Password,
 		      int passlen,
 		      char *Tag,
-		      unsigned char LiteralLogin )
+		      unsigned char LiteralLogin,
+		      char *QueuedPreauthCommand )
 {
     char *fn = "cmd_login()";
     char SendBuf[BUFSIZE];
@@ -997,7 +1003,7 @@ static int cmd_login( ITD_Struct *Client,
 	return( -1 );
     }
     
-    conn = Get_Server_conn( Username, Password, hostaddr, portstr, LiteralLogin, fullServerResponse );
+    conn = Get_Server_conn( Username, Password, hostaddr, portstr, LiteralLogin, fullServerResponse, QueuedPreauthCommand );
 
     /*
      * wipe out the passwd so we don't have it sitting in memory somewhere.
@@ -1600,6 +1606,7 @@ extern void HandleRequest( int clientsd )
     char *EndOfLine;
     char *CP;
     char SendBuf[BUFSIZE];
+    char S_QueuedPreauthCommand[BUFSIZE] = "";
     int BytesRead;
     int rc;
     unsigned int BufLen = BUFSIZE - 1;
@@ -1754,6 +1761,33 @@ extern void HandleRequest( int clientsd )
 	strncpy( S_Tag, Tag, MAXTAGLEN - 1 );
 	S_Tag[ MAXTAGLEN - 1 ] = '\0';
 	
+	if ( ! strcasecmp( (const char *)Command, "ID" ) )
+	{
+	    if ( Client.LiteralBytesRemaining )
+	    {
+		syslog( LOG_ERR, "%s: Unexpected literal specifier read from client on socket %d as part of ID command -- disconnecting client", fn, Client.conn->sd );
+		IMAPCount->CurrentClientConnections--;
+		close( Client.conn->sd );
+		return;
+	    }
+	    
+// TODO: in the future, we can capture more than one of these in a linked list, but for now, just use the last one we get
+	    // Store the command for later
+	    CP = EndOfLine - 2;
+	    *CP = '\0';
+	    Lasts++;
+		
+	    // make sure we don't go past end (is this necessary?)
+	    if ( Lasts > CP )
+	    {
+		Lasts = CP;
+	    }
+	    snprintf( S_QueuedPreauthCommand, BufLen, "ID %s", Lasts );
+
+	    // Fake response with a NOOP
+	    cmd_noop( &Client, S_Tag );
+	    continue;
+	}
 	if ( ! strcasecmp( (const char *)Command, "NOOP" ) )
 	{
 	    if ( Client.LiteralBytesRemaining )
@@ -1803,7 +1837,7 @@ extern void HandleRequest( int clientsd )
 	    
 	    if ( !strcasecmp( (const char *)AuthMech, "LOGIN" ) )
 	    {
-		rc = cmd_authenticate_login( &Client, S_Tag );
+		rc = cmd_authenticate_login( &Client, S_Tag, S_QueuedPreauthCommand );
 
 		if ( rc == 0 )
 		    continue;
@@ -2161,7 +2195,7 @@ extern void HandleRequest( int clientsd )
 	    Client.MoreData = 0;
 	    
 	    
-	    rc = cmd_login( &Client, S_UserName, S_Password, sizeof S_Password, S_Tag, LiteralFlag );
+	    rc = cmd_login( &Client, S_UserName, S_Password, sizeof S_Password, S_Tag, LiteralFlag, S_QueuedPreauthCommand );
 	    
 	    if ( rc == 0)
 		continue;

@@ -162,6 +162,11 @@ extern pthread_mutex_t trace;
 extern IMAPCounter_Struct *IMAPCount;
 extern ProxyConfig_Struct PC_Struct;
 
+/*
+ *  * Function prototypes for internal entry points.
+ *   */
+static int send_queued_preauth_commands( char *, ITD_Struct * );
+
 #if HAVE_LIBSSL
 extern SSL_CTX *tls_ctx;
 
@@ -507,6 +512,8 @@ extern int Attempt_STARTTLS( ITD_Struct *Server )
  *                            login/authentication request when available.
  *                            NOTE: string must be allocated space at least
  *                            as big as an ITD's ReadBuf (BUFSIZE)
+TODO: change this in the future to be a linked list:
+ *		ptr to a single queued pre-auth command string
  *
  * Returns:	ICD * on success
  *              NULL on failure
@@ -522,7 +529,8 @@ extern ICD_Struct *Get_Server_conn( char *Username,
 				    const char *ClientAddr,
 				    const char *portstr,
 				    unsigned char LiteralPasswd,
-				    char *fullResponse )
+				    char *fullResponse,
+				    char *queued_preauth_command )
 {
     char *fn = "Get_Server_conn()";
     unsigned int HashIndex;
@@ -658,6 +666,16 @@ extern ICD_Struct *Get_Server_conn( char *Username,
 		/* Set the ICD as 'reused' */
 		ICC_Active->server_conn->reused = 1;
 
+		// send queued pre-auth commands
+		Server.conn = ICC_Active->server_conn;
+		if ( send_queued_preauth_commands( queued_preauth_command, &Server ) )
+		{
+			syslog( LOG_INFO,
+				"LOGIN: '%s' (%s:%s) failed: Unable to send queued pre-auth commands",
+				Username, ClientAddr, portstr );
+			goto fail;
+		}
+
 		return( ICC_Active->server_conn );
 	    }
 	}
@@ -743,6 +761,16 @@ extern ICD_Struct *Get_Server_conn( char *Username,
 	/* XXX Should we grab the session id for later reuse? */
     }
 #endif /* HAVE_LIBSSL */
+
+
+    // send queued pre-auth commands
+    if ( send_queued_preauth_commands( queued_preauth_command, &Server ) )
+    {
+	syslog( LOG_INFO,
+		"LOGIN: '%s' (%s:%s) failed: Unable to send queued pre-auth commands",
+		Username, ClientAddr, portstr );
+	goto fail;
+    }
 
 
     /*
@@ -1233,6 +1261,166 @@ extern ICD_Struct *Get_Server_conn( char *Username,
 }
 
     
+
+
+
+/*++
+ * Function:	send_queued_preauth_commands
+ *
+ * Purpose:	Sends queued pre-auth commands to a server connection.
+ *		The commands have been kept in memory by the proxy
+ *	 	server until the client sent an auth/login command.
+ *
+TODO: change this in the future to be a linked list:
+ * Parameters:	ptr to a single queued pre-auth command string
+ *		ptr to an IMAPTransactionDescriptor structure
+ *
+ * Returns:	non-zero if any of the commands failed
+ *
+ * Authors:	Paul Lesniewski
+ *--
+ */
+static int send_queued_preauth_commands( char *queued_preauth_command, ITD_Struct *Server )
+{
+    char *fn = "send_queued_preauth_commands()";
+    unsigned int BufLen = BUFSIZE - 1;
+    char SendBuf[BUFSIZE];
+    int rc;
+    char *tokenptr;
+    char *endptr;
+    char *last;
+    int tag_count = 0;
+
+//TODO: this line is where we would put a for loop to iterate over a linked list of saved preauth commands if we ever decide to implement the ability to have more than one........... NOTE in that case, when done here (error or success), we'd want to clear the list and free the memory it took
+if ( strlen( queued_preauth_command ) )
+    {
+	// "QP" == "Queued Preauth" (just plain "P" is already taken)
+	snprintf( SendBuf, BufLen, "QP%04d %s\r\n", ++tag_count, queued_preauth_command );
+	
+	if ( IMAP_Write( Server->conn, SendBuf, strlen(SendBuf) ) == -1 )
+	{
+	    syslog( LOG_INFO,
+		    "QUEUED PREAUTH failed: IMAP_Write() failed attempting to send queued pre-authentication command to IMAP server: %s",
+		    strerror( errno ) );
+	    goto fail;
+	}
+    
+	// Read the server response
+	//
+	for ( ;; )
+	{
+	    if ( ( rc = IMAP_Line_Read( Server ) ) == -1 )
+	    {
+		syslog( LOG_INFO,
+			"QUEUED PREAUTH failed: No response from IMAP server after sending queued pre-authentication command (%s)",
+			queued_preauth_command );
+		goto fail;
+	    }
+
+	    if ( Server->LiteralBytesRemaining )
+	    {
+		syslog(LOG_ERR, "%s: Unexpected string literal in server queued pre-authentication response.", fn );
+		goto fail;
+	    }
+	
+	    if ( Server->ReadBuf[0] != '*' )
+		break;
+	}
+    
+    
+	// Try to match up the tag in the server response to the client tag.
+	//
+	endptr = Server->ReadBuf + rc;
+    
+	tokenptr = memtok( Server->ReadBuf, endptr, &last );
+    
+	if ( !tokenptr )
+	{
+
+	    // no tokens found in server response?  Not likely, but we still
+	    // have to check.
+	    //
+	    syslog( LOG_INFO, "QUEUED PREAUTH failed: server response to queued pre-authentication command contained no tokens." );
+	    goto fail;
+	}
+    
+        // make SendBuf just contain the tag so we can compare it
+	SendBuf[6] = '\0';
+	if ( memcmp( (const void *)tokenptr, (const void *)SendBuf, strlen( tokenptr ) ) )
+	{
+
+	    // non-matching tag read back from the server... Lord knows what this
+	    // is, so we'll fail.
+	    //
+	    syslog( LOG_INFO, "QUEUED PREAUTH failed: server response to queued pre-authentication command contained non-matching tag." );
+	    goto fail;
+	}
+    
+    
+	// Now that we've matched the tags up, see if the response was 'OK'
+	//
+	tokenptr = memtok( NULL, endptr, &last );
+    
+	if ( !tokenptr )
+	{
+	    // again, not likely but we still have to check... 
+	    //
+	    syslog( LOG_INFO, "QUEUED PREAUTH failed: Malformed server response to queued pre-authentication command" );
+	    goto fail;
+	}
+    
+	if ( memcmp( (const void *)tokenptr, "OK", 2 ) )
+	{
+	    // In order to log the full server response (minus the tag),
+	    // we want to re-construct the ReadBuf starting at the location
+	    // currently pointed to by tokenptr.  Thus, we put back the
+	    // last space that memtok() had replaced with a null characater
+	    // (at location pointed to by last).
+	    //
+	    *last = ' ';
+
+	    // Then we re-adjust endptr to point to the CR at the end of
+	    // the line and set to NULL (a few lines below) so we can use
+	    // the rest of the response information as a normal string
+	    // 
+	    endptr = memchr( last + 1, '\r', endptr - (last + 1) );
+
+	    // No CR is unexpected; does this indicate malformed response?
+	    // Probably.  Anyway, we'll just give up on finding any other
+	    // info from the server.
+	    //
+	    if ( !endptr )
+	    endptr = last;
+
+	    *endptr = '\0';
+
+	    syslog( LOG_INFO,
+		"QUEUED PREAUTH failed: non-OK server response to queued pre-authentication command (%s): %s",
+		queued_preauth_command,
+		tokenptr );
+	    goto fail;
+	}
+    }
+
+
+    // finsihed without any errors
+    return 0;
+
+
+  fail:
+#if HAVE_LIBSSL
+    if ( Server->conn->tls )
+    {
+	SSL_shutdown( Server->conn->tls );
+	SSL_free( Server->conn->tls );
+    }
+#endif
+    close( Server->conn->sd );
+    free( Server->conn );
+    return 1;
+}
+
+
 
 
 
