@@ -9,7 +9,8 @@ the webserver can then send plaintext auth to the proxy without the password
 ever crossing the network, then the proxy can use TLS to the IMAP server.
 
 The proxy will only use TLS if the real IMAP server forces it to do so by
-advertising LOGINDISABLED in the capability string.
+advertising LOGINDISABLED in the capability string unless force_tls is
+enabled in the configuration file.
 
 squirrelmail-imap_proxy does not support the deprecated notion of imaps
 using port 993.  It only supports the use of the STARTTLS command to
