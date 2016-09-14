@@ -283,7 +283,7 @@ int main( int argc, char *argv[] )
     const char *fn = "main()";
     char f_randfile[ PATH_MAX ];
     int listensd;                      /* socket descriptor we'll bind to */
-    int clientsd;                      /* incoming socket descriptor */
+    long clientsd;                     /* incoming socket descriptor */
     int sockaddrlen;                       
     struct sockaddr_storage srvaddr;
     struct sockaddr_storage cliaddr;
