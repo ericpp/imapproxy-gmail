@@ -735,7 +735,7 @@ static int cmd_authenticate_login( ITD_Struct *Client,
     
     if ( BytesRead == -1 )
     {
-	syslog( LOG_NOTICE, "%s: Failed to read base64 encoded username from client on socket %d", fn, Client->conn->sd );
+	syslog( LOG_NOTICE, "%s: Failed to read base64 encoded username from client on sd [%d]", fn, Client->conn->sd );
 	return( -1 );
     }
 
@@ -744,7 +744,7 @@ static int cmd_authenticate_login( ITD_Struct *Client,
      */
     if ( Client->LiteralBytesRemaining )
     {
-	syslog( LOG_NOTICE, "%s: Read unexpected literal specifier from client on socket %d", fn, Client->conn->sd );
+	syslog( LOG_NOTICE, "%s: Read unexpected literal specifier from client on sd [%d]", fn, Client->conn->sd );
 	return( -1 );
     }
     
@@ -788,13 +788,13 @@ static int cmd_authenticate_login( ITD_Struct *Client,
 
     if ( Client->LiteralBytesRemaining )
     {
-	syslog( LOG_ERR, "%s: received unexpected literal specifier from client on socket %d", fn, Client->conn->sd );
+	syslog( LOG_ERR, "%s: received unexpected literal specifier from client on sd [%d]", fn, Client->conn->sd );
 	return( -1 );
     }
     
     if ( BytesRead == -1 )
     {
-        syslog( LOG_NOTICE, "%s: Failed to read base64 encoded password from client on socket %d", fn, Client->conn->sd );
+        syslog( LOG_NOTICE, "%s: Failed to read base64 encoded password from client on sd [%d]", fn, Client->conn->sd );
 	return( -1 );
     }
     
@@ -1329,7 +1329,7 @@ static int Raw_Proxy( ITD_Struct *Client, ITD_Struct *Server,
 		
 		if ( status == -1 )
 		{
-		    syslog(LOG_NOTICE, "%s: Failed to read line from client on socket %d", fn, Client->conn->sd );
+		    syslog(LOG_NOTICE, "%s: Failed to read line from client on sd [%d]", fn, Client->conn->sd );
 		    return( -1 );
 		}
 	    
@@ -1526,7 +1526,7 @@ static int Raw_Proxy( ITD_Struct *Client, ITD_Struct *Server,
 		
 		if ( status == -1 )
 		{
-		    syslog(LOG_NOTICE, "%s: Failed to read string literal from client on socket %d", fn, Client->conn->sd );
+		    syslog(LOG_NOTICE, "%s: Failed to read string literal from client on sd [%d]", fn, Client->conn->sd );
 		    return( -1 );
 		}
 
@@ -1765,7 +1765,7 @@ extern void HandleRequest( int clientsd )
 	{
 	    if ( Client.LiteralBytesRemaining )
 	    {
-		syslog( LOG_ERR, "%s: Unexpected literal specifier read from client on socket %d as part of ID command -- disconnecting client", fn, Client.conn->sd );
+		syslog( LOG_ERR, "%s: Unexpected literal specifier read from client on sd [%d] as part of ID command -- disconnecting client", fn, Client.conn->sd );
 		IMAPCount->CurrentClientConnections--;
 		close( Client.conn->sd );
 		return;
@@ -1792,7 +1792,7 @@ extern void HandleRequest( int clientsd )
 	{
 	    if ( Client.LiteralBytesRemaining )
 	    {
-		syslog( LOG_ERR, "%s: Unexpected literal specifier read from client on socket %d as part of NOOP command -- disconnecting client", fn, Client.conn->sd );
+		syslog( LOG_ERR, "%s: Unexpected literal specifier read from client on sd [%d] as part of NOOP command -- disconnecting client", fn, Client.conn->sd );
 		IMAPCount->CurrentClientConnections--;
 		close( Client.conn->sd );
 		return;
@@ -1805,7 +1805,7 @@ extern void HandleRequest( int clientsd )
 	{
 	    if ( Client.LiteralBytesRemaining )
 	    {
-		syslog( LOG_ERR, "%s: Unexpected literal specifier read from client on socket %d as part of CAPABILITY command -- disconnecting client", fn, Client.conn->sd );
+		syslog( LOG_ERR, "%s: Unexpected literal specifier read from client on sd [%d] as part of CAPABILITY command -- disconnecting client", fn, Client.conn->sd );
 		IMAPCount->CurrentClientConnections--;
 		close( Client.conn->sd );
 		return;
@@ -1817,7 +1817,7 @@ extern void HandleRequest( int clientsd )
 	{
 	    if ( Client.LiteralBytesRemaining )
 	    {
-		syslog( LOG_ERR, "%s: Unexpected literal specifier read from client on socket %d as part of AUTHENTICATE command -- disconnecting client", fn, Client.conn->sd );
+		syslog( LOG_ERR, "%s: Unexpected literal specifier read from client on sd [%d] as part of AUTHENTICATE command -- disconnecting client", fn, Client.conn->sd );
 		IMAPCount->CurrentClientConnections--;
 		close( Client.conn->sd );
 		return;
@@ -1893,7 +1893,7 @@ extern void HandleRequest( int clientsd )
 	{
 	    if ( Client.LiteralBytesRemaining )
 	    {
-		syslog( LOG_ERR, "%s: Unexpected literal specifier read from client on socket %d as part of LOGOUT command -- disconnecting client", fn, Client.conn->sd );
+		syslog( LOG_ERR, "%s: Unexpected literal specifier read from client on sd [%d] as part of LOGOUT command -- disconnecting client", fn, Client.conn->sd );
 		IMAPCount->CurrentClientConnections--;
 		close( Client.conn->sd );
 		return;
@@ -1907,7 +1907,7 @@ extern void HandleRequest( int clientsd )
 	{
 	    if ( Client.LiteralBytesRemaining )
 	    {
-		syslog( LOG_ERR, "%s: Unexpected literal specifier read from client on socket %d as part of P_TRACE command -- disconnecting client", fn, Client.conn->sd );
+		syslog( LOG_ERR, "%s: Unexpected literal specifier read from client on sd [%d] as part of P_TRACE command -- disconnecting client", fn, Client.conn->sd );
 		IMAPCount->CurrentClientConnections--;
 		close( Client.conn->sd );
 		return;
@@ -1920,7 +1920,7 @@ extern void HandleRequest( int clientsd )
 	{
 	    if ( Client.LiteralBytesRemaining )
 	    {
-		syslog( LOG_ERR, "%s: Unexpected literal specifier read from client on socket %d as part of P_DUMPICC command -- disconnecting client", fn, Client.conn->sd );
+		syslog( LOG_ERR, "%s: Unexpected literal specifier read from client on sd [%d] as part of P_DUMPICC command -- disconnecting client", fn, Client.conn->sd );
 		IMAPCount->CurrentClientConnections--;
 		close( Client.conn->sd );
 		return;
@@ -1932,7 +1932,7 @@ extern void HandleRequest( int clientsd )
 	{
 	    if ( Client.LiteralBytesRemaining )
 	    {
-		syslog( LOG_ERR, "%s: Unexpected literal specifier read from client on socket %d as part of P_RESETCOUNTERS command -- disconnecting client", fn, Client.conn->sd );
+		syslog( LOG_ERR, "%s: Unexpected literal specifier read from client on sd [%d] as part of P_RESETCOUNTERS command -- disconnecting client", fn, Client.conn->sd );
 		IMAPCount->CurrentClientConnections--;
 		close( Client.conn->sd );
 		return;
@@ -1944,7 +1944,7 @@ extern void HandleRequest( int clientsd )
 	{
 	    if ( Client.LiteralBytesRemaining )
 	    {
-		syslog( LOG_ERR, "%s: Unexpected literal specifier read from client on socket %d as part of P_NEWLOG command -- disconnecting client", fn, Client.conn->sd );
+		syslog( LOG_ERR, "%s: Unexpected literal specifier read from client on sd [%d] as part of P_NEWLOG command -- disconnecting client", fn, Client.conn->sd );
 		IMAPCount->CurrentClientConnections--;
 		close( Client.conn->sd );
 		return;
@@ -1956,7 +1956,7 @@ extern void HandleRequest( int clientsd )
 	{
 	    if ( Client.LiteralBytesRemaining )
 	    {
-		syslog( LOG_ERR, "%s: Unexpected literal specifier read from client on socket %d as part of P_VERSION command -- disconnecting client", fn, Client.conn->sd );
+		syslog( LOG_ERR, "%s: Unexpected literal specifier read from client on sd [%d] as part of P_VERSION command -- disconnecting client", fn, Client.conn->sd );
 		IMAPCount->CurrentClientConnections--;
 		close( Client.conn->sd );
 		return;
@@ -2232,7 +2232,7 @@ extern void HandleRequest( int clientsd )
 	     */
 	    if ( Client.LiteralBytesRemaining )
 	    {
-		syslog( LOG_ERR, "%s: Unexpected literal specifier read from client on socket %d as part of unknown command -- disconnecting client", fn, Client.conn->sd );
+		syslog( LOG_ERR, "%s: Unexpected literal specifier read from client on sd [%d] as part of unknown command -- disconnecting client", fn, Client.conn->sd );
 		IMAPCount->CurrentClientConnections--;
 		close( Client.conn->sd );
 		return;
