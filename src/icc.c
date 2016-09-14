@@ -136,18 +136,25 @@ static void _ICC_Recycle( unsigned int Expiration )
 		syslog(LOG_INFO, "Expiring server sd [%d]", HashEntry->server_conn->sd);
 		/* Logout of the IMAP server and close the server socket. */
 
-		IMAP_Write( HashEntry->server_conn, "VIC20 LOGOUT\r\n",
-			    strlen( "VIC20 LOGOUT\r\n" ) );
+		if (HashEntry->server_conn->sd != -1)
+		{
+		    IMAP_Write( HashEntry->server_conn, "VIC20 LOGOUT\r\n",
+		    	        strlen( "VIC20 LOGOUT\r\n" ) );
 
 #if HAVE_LIBSSL
-		if ( HashEntry->server_conn->tls )
-		{
-		    SSL_shutdown( HashEntry->server_conn->tls );
-		    SSL_free( HashEntry->server_conn->tls );
-		}
+		    if ( HashEntry->server_conn->tls )
+		    {
+		        SSL_shutdown( HashEntry->server_conn->tls );
+		        SSL_free( HashEntry->server_conn->tls );
+		    }
 #endif
-		close( HashEntry->server_conn->sd );
-		free( HashEntry->server_conn );
+		    close( HashEntry->server_conn->sd );
+		    free( HashEntry->server_conn );
+		}
+		else
+		{
+		    syslog(LOG_WARNING, "Expiring freed ICC");
+		}
 		
 		/*
 		 * This was being counted as a "retained" connection.  It was

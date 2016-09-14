@@ -3,6 +3,8 @@
 	* Added support for accepting pre-auth ID commands (RFC 2971)
 	* Make EGD support conditional, provide compatibility with
 	  LibreSSL, other small fixes provided by the BSD team
+	* Fixed anomalous crashes recycling used connections (thanks
+	  to Emmanuel Dreyfus)
 
 2014-01-20  Paul Lesniewski <paul@squirrelmail.org>
 	* Added support for up to TLS v1.2 (thanks to Emmanuel Dreyfus)
