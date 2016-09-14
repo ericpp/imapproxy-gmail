@@ -694,6 +694,11 @@ extern ICD_Struct *Get_Server_conn( char *Username,
      * Open a connection to the IMAP server so we can attempt to login 
      */
     Server.conn = ( ICD_Struct * ) malloc( sizeof ( ICD_Struct ) );
+    if (Server.conn == NULL) {
+	syslog( LOG_ERR, "%s: malloc() failed: %s -- Exiting.", __func__,
+		strerror( errno ) );
+	exit( 1 );
+    }
     memset( Server.conn, 0, sizeof ( ICD_Struct ) );
 
     /* As a new connection, the ICD is not 'reused' */
