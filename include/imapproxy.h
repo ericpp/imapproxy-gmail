@@ -314,6 +314,8 @@ struct ProxyConfig
     char *auth_sasl_plain_username;           /* authentication username under SASL PLAIN */
     char *auth_sasl_plain_password;           /* authentication password under SASL PLAIN */
     char *auth_shared_secret;                 /* REQUIRED shared secret in leiu of a user password when using LOGIN command with SASL PLAIN authentication */
+    unsigned int ipversion;                   /* limit DNS requests to AF_INET or AF_INET6 */
+    unsigned int dnsrr;                       /* cycle through all DNS entries we got */
 };
 
 

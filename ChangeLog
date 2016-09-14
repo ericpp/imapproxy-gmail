@@ -1,12 +1,16 @@
 2016-09-12  Paul Lesniewski <paul@squirrelmail.org>
 	* Added support for systemd startup
 	* Added support for accepting pre-auth ID commands (RFC 2971)
-	* Retain compatibility with older OpenSSL versions (thanks to
-	  Wolfgang Breyha)
+	* Added support for DNS RR to cycle through multiple IMAP
+	  server backends (thanks to Wolfgang Breyha)
+	* Added ability to restrict DNS lookups to IPv4 or IPv6
+	  only (thanks to Wolfgang Breyha)
 	* Make EGD support conditional, provide compatibility with
 	  LibreSSL, other small fixes provided by the BSD team
 	* Fixed anomalous crashes recycling used connections (thanks
 	  to Emmanuel Dreyfus)
+	* Retain compatibility with older OpenSSL versions (thanks to
+	  Wolfgang Breyha)
 	* Make use of the no_new_privs flag (Linux only) when becoming
 	  non-root (thanks to Shawn Landden)
 

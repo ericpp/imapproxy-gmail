@@ -159,6 +159,7 @@ extern ICC_Struct *ICC_HashTable[ HASH_TABLE_SIZE ];
 extern ISD_Struct ISD;
 extern pthread_mutex_t mp;
 extern pthread_mutex_t trace;
+extern pthread_mutex_t aimtx;
 extern IMAPCounter_Struct *IMAPCount;
 extern ProxyConfig_Struct PC_Struct;
 
@@ -551,6 +552,7 @@ extern ICD_Struct *Get_Server_conn( char *Username,
     ITD_Struct Server;
     int rc;
     unsigned int Expiration;
+    struct addrinfo *useai;
 
     EVP_MD_CTX mdctx;
     int md_len;
@@ -704,8 +706,23 @@ extern ICD_Struct *Get_Server_conn( char *Username,
     /* As a new connection, the ICD is not 'reused' */
     Server.conn->reused = 0;
 
-    Server.conn->sd = socket( ISD.srv->ai_family, ISD.srv->ai_socktype, 
-			      ISD.srv->ai_protocol );
+    if (PC_Struct.dnsrr)
+    {
+        LockMutex( &aimtx );
+        /* cycle through returned hosts */
+        if ( ISD.srv->ai_next )
+            ISD.srv = ISD.srv->ai_next;
+        else
+            ISD.srv = ISD.airesults;
+    
+        useai = ISD.srv;
+        UnLockMutex( &aimtx );
+    }
+    else
+        useai = ISD.srv;
+
+    Server.conn->sd = socket( useai->ai_family, useai->ai_socktype, 
+			      useai->ai_protocol );
     if ( Server.conn->sd == -1 )
     {
 	syslog( LOG_INFO,
@@ -720,8 +737,8 @@ extern ICD_Struct *Get_Server_conn( char *Username,
 	setsockopt( Server.conn->sd, SOL_SOCKET, SO_KEEPALIVE, &onoff, sizeof onoff );
     }
     
-    if ( connect( Server.conn->sd, (struct sockaddr *)ISD.srv->ai_addr, 
-		  ISD.srv->ai_addrlen ) == -1 )
+    if ( connect( Server.conn->sd, (struct sockaddr *)useai->ai_addr, 
+		  useai->ai_addrlen ) == -1 )
     {
 	syslog( LOG_INFO,
 		"LOGIN: '%s' (%s:%s) failed: Unable to connect to IMAP server: %s",

@@ -328,6 +328,8 @@ void SetDefaultConfigValues(ProxyConfig_Struct *PC_Struct)
 {
     PC_Struct->server_connect_retries = DEFAULT_SERVER_CONNECT_RETRIES;
     PC_Struct->server_connect_delay = DEFAULT_SERVER_CONNECT_DELAY;
+    PC_Struct->ipversion = 0;
+    PC_Struct->dnsrr = 0;
 
     return;
 }
@@ -467,6 +469,12 @@ extern void SetConfigOptions( char *ConfigFile )
 
     ADD_TO_TABLE( "enable_admin_commands", SetBooleanValue,
 		  &PC_Struct.enable_admin_commands, index );
+    
+    ADD_TO_TABLE( "ipversion_only", SetNumericValue,
+		  &PC_Struct.ipversion, index );
+    
+    ADD_TO_TABLE( "dns_rr", SetBooleanValue,
+		  &PC_Struct.dnsrr, index );
     
     ConfigTable[index].Keyword[0] = '\0';
     

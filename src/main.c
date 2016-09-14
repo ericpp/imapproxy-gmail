@@ -246,6 +246,7 @@ ICC_Struct *ICC_HashTable[ HASH_TABLE_SIZE ];
 IMAPCounter_Struct *IMAPCount;       /* global IMAP counter struct */
 pthread_mutex_t mp;                  /* "main" mutex used for ICC sync */
 pthread_mutex_t trace;               /* mutex used for username tracing */
+pthread_mutex_t aimtx;               /* mutex used for DNS RR */
 char TraceUser[MAXUSERNAMELEN];      /* username we want to trace */
 int Tracefd;                         /* fd of our trace file (always open) */
 ProxyConfig_Struct PC_Struct;        /* Global configuration data */
@@ -408,6 +409,13 @@ int main( int argc, char *argv[] )
     if ( rc )
     {
 	syslog(LOG_ERR, "%s: pthread_mutex_init() returned error [%d] initializing trace mutex.  Exiting.", fn, rc );
+	exit( 1 );
+    }
+
+    rc = pthread_mutex_init(&aimtx, NULL);
+    if ( rc )
+    {
+	syslog(LOG_ERR, "%s: pthread_mutex_init() returned error [%d] initializing aimtx mutex.  Exiting.", fn, rc );
 	exit( 1 );
     }
 
@@ -692,8 +700,8 @@ int main( int argc, char *argv[] )
     /* launch a recycle thread before we loop */
     pthread_create( &RecycleThread, &attr, (void *)ICC_Recycle_Loop, NULL );
 
-    syslog(LOG_INFO, "%s: Launched ICC recycle thread with id %d", 
-	   fn, (int)RecycleThread );
+    syslog(LOG_INFO, "%s: Launched ICC recycle thread with id %lu", 
+	   fn, (unsigned long int)RecycleThread );
 
     /*
      * Now start listening and accepting connections.
@@ -863,7 +871,16 @@ static void ServerInit( void )
 	    PC_Struct.server_hostname );
     
     memset( &aihints, 0, sizeof aihints );
-    aihints.ai_family = AF_UNSPEC;
+    switch ( PC_Struct.ipversion )
+    {
+         case 4: aihints.ai_family = AF_INET;
+                 syslog( LOG_INFO, "%s: limiting to IPv4 only", fn);
+                 break;
+         case 6: aihints.ai_family = AF_INET6;
+                 syslog( LOG_INFO, "%s: limiting to IPv6 only", fn);
+                 break;
+         default: aihints.ai_family = AF_UNSPEC;
+    }
     aihints.ai_socktype = SOCK_STREAM;
 
     for( ;; )
@@ -893,6 +910,14 @@ static void ServerInit( void )
     //
     if (strcmp(PC_Struct.server_port, "993") == 0)
         syslog(LOG_ERR, "WARNING: IMAP Proxy uses STARTTLS to encrypt a \"normal\" IMAP connection and does not support direct TLS/SSL connections that are typically served on port 993 (but there is a way around this if the server is only available on that port - see README.ssl).  Chances are you have misconfigured the server_port setting, and that it should be something more like port 143.  If the server at '%s' supports STARTTLS from an unencrypted connection on port 993, then you can ignore this (but, again, chances are that this is NOT the case).", PC_Struct.server_hostname);
+
+    /*
+     * check for DNS RR
+     */
+    if ( ai->ai_next && PC_Struct.dnsrr ) /* at least a second RR was returned */
+        syslog(LOG_INFO, "%s: Using DNS RR", fn);
+    else
+        PC_Struct.dnsrr = 0;
 
     /* 
      * fill in the address family, the host address, and the
