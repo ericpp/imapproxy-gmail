@@ -452,13 +452,8 @@ int main( int argc, char *argv[] )
     /* Set up OpenSSL thread protection */
     ssl_thread_setup(fn);
 
-    /* Need to seed PRNG, too! */
-    if ( RAND_egd( ( RAND_file_name( f_randfile, sizeof( f_randfile ) ) == f_randfile ) ? f_randfile : "/.rnd" ) )
-    {
-	/* Not an EGD, so read and write it. */
-	if ( RAND_load_file( f_randfile, -1 ) )
+    if ( RAND_load_file( f_randfile, -1 ) )
 	RAND_write_file( f_randfile );
-    }
 
     SSL_load_error_strings();
 
