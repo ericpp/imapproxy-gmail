@@ -148,6 +148,7 @@
 
 #if HAVE_LIBSSL
 #include <openssl/ssl.h>
+#include <openssl/md5.h>
 #include <openssl/rand.h>
 #include <limits.h>
 #endif

@@ -39,6 +39,9 @@
 
 #define OPENSSL_THREAD_DEFINES
 #include <openssl/opensslconf.h>
+#if defined(THREADS)
+#define OPENSSL_THREADS
+#endif
 #if defined(OPENSSL_THREADS)
 
 

@@ -1,7 +1,8 @@
 2016-09-12  Paul Lesniewski <paul@squirrelmail.org>
 	* Added support for systemd startup
 	* Added support for accepting pre-auth ID commands (RFC 2971)
-	* Removed EGD support (thanks to Loganaden Velvindron)
+	* Make EGD support conditional, provide compatibility with
+	  LibreSSL, other small fixes provided by the BSD team
 
 2014-01-20  Paul Lesniewski <paul@squirrelmail.org>
 	* Added support for up to TLS v1.2 (thanks to Emmanuel Dreyfus)

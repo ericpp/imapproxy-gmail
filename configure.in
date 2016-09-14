@@ -14,12 +14,7 @@ AC_CANONICAL_SYSTEM()
 
 
 dnl Check for BSD sockets
-AC_CHECK_FUNC(connect, ,
-	AC_CHECK_LIB(nsl, gethostbyname, ,)
-	AC_CHECK_LIB(socket, connect, ,
-		AC_ERROR([Can't compile without BSD sockets!!!])
-	)
-)
+AC_CHECK_FUNC([socket], , [AC_CHECK_LIB(socket, socket, , exit)])
 
 
 dnl Check for pthreads
@@ -116,6 +111,9 @@ AC_CHECK_LIB(ssl, SSL_new, ,
 	AC_WARN([OpenSSL library not found!!!  STARTTLS will be disabled.]),
 	-lcrypto)
 
+AC_CHECK_LIB(crypto, RAND_egd, 
+	AC_DEFINE(HAVE_RAND_EGD, 1, [Define if the libcrypto has RAND_egd])
+)
 
 dnl Check for curses
 save_LIBS="$LIBS"
@@ -130,6 +128,8 @@ LIBS="$save_LIBS"
 AC_SUBST(LIB_CURSES)
 
 
+eval expanded_sysconfdir="\"$sysconfdir\""
+AC_DEFINE_UNQUOTED(DEFAULT_CONFIG_FILE, "$expanded_sysconfdir/imapproxyd.conf", [default location of config file])
 AC_CONFIG_HEADER(config.h)
 
 
