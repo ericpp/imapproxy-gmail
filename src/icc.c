@@ -153,7 +153,7 @@ static void _ICC_Recycle( unsigned int Expiration )
 		}
 		else
 		{
-		    syslog(LOG_WARNING, "Expiring freed ICC");
+		    syslog(LOG_INFO, "Expiring invalidated server sd");
 		}
 		
 		/*
@@ -280,6 +280,8 @@ void _ICC_Invalidate ( ICC_Struct *ICC )
     #endif
 
     close( ICC->server_conn->sd );
+
+    syslog(LOG_INFO, "Invalidating server sd [%d]", ICC->server_conn->sd);
 
     ICC->server_conn->sd = -1; /* make sure this can't be reused */
     ICC->logouttime = 1;

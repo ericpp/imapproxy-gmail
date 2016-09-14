@@ -481,11 +481,15 @@ int main( int argc, char *argv[] )
     if ( PC_Struct.tls_no_tlsv1 ) 
         tls_options |= SSL_OP_NO_TLSv1;
 
+#ifdef SSL_OP_NO_TLSv1_1
     if ( PC_Struct.tls_no_tlsv1_1 ) 
         tls_options |= SSL_OP_NO_TLSv1_1;
+#endif
 
+#ifdef SSL_OP_NO_TLSv1_2
     if ( PC_Struct.tls_no_tlsv1_2 ) 
         tls_options |= SSL_OP_NO_TLSv1_2;
+#endif
 
     SSL_CTX_set_options( tls_ctx, tls_options );
  
@@ -524,6 +528,7 @@ int main( int argc, char *argv[] )
     }
 
     /* Enable ECDHE is OpenSSL has it */
+#if !defined(OPENSSL_NO_ECDH) && OPENSSL_VERSION_NUMBER >= 0x10000000L
 #ifdef NID_X9_62_prime256v1
     {
         EC_KEY *ecdh;
@@ -532,6 +537,7 @@ int main( int argc, char *argv[] )
         SSL_CTX_set_tmp_ecdh( tls_ctx, ecdh );
         EC_KEY_free( ecdh );
     }
+#endif
 #endif
 #endif /* HAVE_LIBSSL */
 
