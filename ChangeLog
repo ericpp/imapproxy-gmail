@@ -5,6 +5,8 @@
 	  LibreSSL, other small fixes provided by the BSD team
 	* Fixed anomalous crashes recycling used connections (thanks
 	  to Emmanuel Dreyfus)
+	* Make use of the no_new_privs flag (Linux only) when becoming
+	  non-root (thanks to Shawn Landden)
 
 2014-01-20  Paul Lesniewski <paul@squirrelmail.org>
 	* Added support for up to TLS v1.2 (thanks to Emmanuel Dreyfus)

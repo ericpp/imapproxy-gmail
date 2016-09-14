@@ -57,6 +57,9 @@
 #if HAVE_UNISTD_H
 #include <unistd.h>
 #endif
+#ifdef __linux__
+#include <sys/prctl.h>
+#endif
 
 #include "imapproxy.h"
 
@@ -186,6 +189,17 @@ extern int BecomeNonRoot( void )
 	return(-1);
     }
     
+#ifdef __linux__
+    if ( prctl(PR_SET_NO_NEW_PRIVS, 1, 0, 0, 0) < 0)
+    {
+	syslog( LOG_WARNING, "%s: prctl(PR_SET_NO_NEW_PRIVS, 1) failed: %s",  fn,
+	    strerror(errno));
+	if ( errno == EINVAL )
+	    syslog( LOG_INFO, "%s: Perhaps kernel too old (<3.5)", fn);
+    } else
+	syslog( LOG_INFO, "%s: enabled no_new_privs",  fn);
+#endif
+
     return(0);
 }
 
