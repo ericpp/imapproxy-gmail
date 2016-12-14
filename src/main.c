@@ -1417,7 +1417,7 @@ static void SetBannerAndCapability( void )
     
     if ( strncasecmp( itd.ReadBuf, IMAP_TAGGED_OK, strlen(IMAP_TAGGED_OK) ) )
     {
-	syslog(LOG_ERR, "%s: Received non-OK tagged reponse from IMAP server on CAPABILITY command -- exiting.", fn );
+	syslog(LOG_ERR, "%s: Received non-OK tagged response from IMAP server on CAPABILITY command -- exiting.", fn );
 	close( itd.conn->sd );
 	exit( 1 );
     }
@@ -1497,7 +1497,7 @@ static void SetBannerAndCapability( void )
 
 		if ( strncasecmp( itd.ReadBuf, IMAP_TAGGED_OK, strlen(IMAP_TAGGED_OK) ) )
 		{
-		    syslog(LOG_ERR, "%s: Received non-OK tagged reponse from imap server on CAPABILITY command -- exiting.", fn );
+		    syslog(LOG_ERR, "%s: Received non-OK tagged response from imap server on CAPABILITY command -- exiting.", fn );
 		    close( itd.conn->sd );
 		    exit( 1 );
 		}
