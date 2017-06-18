@@ -384,6 +384,9 @@ extern void SetConfigOptions( char *ConfigFile )
     ADD_TO_TABLE( "server_port", SetStringValue, 
 		  &PC_Struct.server_port, index );
 
+    ADD_TO_TABLE( "server_tls", SetBooleanValue,
+		  &PC_Struct.server_tls, index );
+
     ADD_TO_TABLE( "connect_retries", SetNumericValue,
 		  &PC_Struct.server_connect_retries, index );
     ADD_TO_TABLE( "connect_delay", SetNumericValue,

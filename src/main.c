@@ -902,14 +902,6 @@ static void ServerInit( void )
 
     syslog(LOG_INFO, "%s: Proxying to IMAP port %s", 
            fn, PC_Struct.server_port );
-        
-    // Since IMAP Proxy uses STARTTLS and does not speak "imaps",
-    // let's spit out an informative warning message if the server
-    // port was configured to 993, which, 99.9% of the time, is a
-    // mistake
-    //
-    if (strcmp(PC_Struct.server_port, "993") == 0)
-        syslog(LOG_ERR, "WARNING: IMAP Proxy uses STARTTLS to encrypt a \"normal\" IMAP connection and does not support direct TLS/SSL connections that are typically served on port 993 (but there is a way around this if the server is only available on that port - see README.ssl).  Chances are you have misconfigured the server_port setting, and that it should be something more like port 143.  If the server at '%s' supports STARTTLS from an unencrypted connection on port 993, then you can ignore this (but, again, chances are that this is NOT the case).", PC_Struct.server_hostname);
 
     /*
      * check for DNS RR
@@ -1328,6 +1320,14 @@ static void SetBannerAndCapability( void )
     itd.conn = &conn;
     itd.conn->sd = sd;
     
+
+    if ( PC_Struct.server_tls && EnableTLS( &itd ) != 0 )
+    {
+        syslog(LOG_ERR, "%s: Unable to enable TLS on connection: %s -- Exiting.", fn);
+        close( itd.conn->sd );
+	exit( 1 );
+    }
+
     /*
      * The first thing we get back from the server should be the
      * banner string.
@@ -1426,7 +1426,7 @@ static void SetBannerAndCapability( void )
      * If we're using it, attempt STARTTLS before doing one more
      * CAPABILITY so our capability string is accurate
      */
-    if ( PC_Struct.login_disabled || PC_Struct.force_tls )
+    if ( !PC_Struct.server_tls && ( PC_Struct.login_disabled || PC_Struct.force_tls ) )
     {
 #if HAVE_LIBSSL
 	if ( PC_Struct.support_starttls != STARTTLS_NOT_SUPPORTED )

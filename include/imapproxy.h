@@ -282,6 +282,7 @@ struct ProxyConfig
     char *listen_addr;                        /* address we bind to */
     char *server_hostname;                    /* server we proxy to */
     char *server_port;                        /* port we proxy to */
+    unsigned int server_tls;                  /* server uses TLS */
     unsigned int server_connect_retries;      /* connect retries to IMAP server */
     unsigned int server_connect_delay;	      /* delay between connection retry rounds */
     unsigned int cache_size;                  /* number of cache slots */

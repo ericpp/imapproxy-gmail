@@ -384,7 +384,7 @@ extern int Attempt_STARTTLS( ITD_Struct *Server )
 	if ( IMAP_Write( Server->conn, SendBuf, strlen(SendBuf) ) == -1 )
 	{
 	    syslog(LOG_INFO, "STARTTLS failed: IMAP_Write() failed attempting to send STARTTLS command to IMAP server: %s", strerror( errno ) );
-	    goto fail;
+	    return -1;
 	}
 
 	/*
@@ -393,13 +393,13 @@ extern int Attempt_STARTTLS( ITD_Struct *Server )
 	if ( ( rc = IMAP_Line_Read( Server ) ) == -1 )
 	{
 	    syslog(LOG_INFO, "STARTTLS failed: No response from IMAP server after sending STARTTLS command" );
-	    goto fail;
+	    return -1;
 	}
 
 	if ( Server->LiteralBytesRemaining )
 	{
 	    syslog(LOG_ERR, "%s: Unexpected string literal in server response.", fn );
-	    goto fail;
+	    return -1;
 	}
 
 
@@ -417,7 +417,7 @@ extern int Attempt_STARTTLS( ITD_Struct *Server )
 	     * have to check.
 	     */
 	    syslog(LOG_INFO, "STARTTLS failed: server response to STARTTLS command contained no tokens." );
-	    goto fail;
+	    return -1;
 	}
 
 	if ( memcmp( (const void *)tokenptr, (const void *)"S0001",
@@ -428,7 +428,7 @@ extern int Attempt_STARTTLS( ITD_Struct *Server )
 	     * is, so we'll fail.
 	     */
 	    syslog(LOG_INFO, "STARTTLS failed: server response to STARTTLS command contained non-matching tag." );
-	    goto fail;
+	    return -1;
 	}
 
 	/*
@@ -440,7 +440,7 @@ extern int Attempt_STARTTLS( ITD_Struct *Server )
 	{
 	    /* again, not likely but we still have to check... */
 	    syslog(LOG_INFO, "STARTTLS failed: Malformed server response to STARTTLS command" );
-	    goto fail;
+	    return -1;
 	}
 
 	if ( memcmp( (const void *)tokenptr, "OK", 2 ) )
@@ -451,13 +451,26 @@ extern int Attempt_STARTTLS( ITD_Struct *Server )
 	     * putting the string back together just for the sake of logging.
 	     */
 	    syslog(LOG_INFO, "STARTTLS failed: non-OK server response to STARTTLS command" );
-	    goto fail;
+	    return -1;
 	}
+
+	if ( EnableTLS( Server ) != 0)
+	{
+		return -1;
+	}
+
+	return 0;
+
+}
+
+extern int EnableTLS( ITD_Struct *Server )
+{
+	int rc;
 
 	Server->conn->tls = SSL_new( tls_ctx );
 	if ( Server->conn->tls == NULL )
 	{
-	    syslog(LOG_INFO, "STARTTLS failed: SSL_new() failed" );
+	    syslog(LOG_INFO, "TLS failed: SSL_new() failed" );
 	    goto fail;
 	}
 
@@ -466,7 +479,7 @@ extern int Attempt_STARTTLS( ITD_Struct *Server )
 	if ( rc == 0 )
 	{
 	    syslog(LOG_INFO,
-		    "STARTTLS failed: SSL_set_fd() failed: %d",
+		    "TLS failed: SSL_set_fd() failed: %d",
 		    SSL_get_error( Server->conn->tls, rc ) );
 	    goto fail;
 	}
@@ -476,20 +489,21 @@ extern int Attempt_STARTTLS( ITD_Struct *Server )
 	if ( rc <= 0 )
 	{
 	    syslog(LOG_INFO,
-		    "STARTTLS failed: SSL_connect() failed, %d: %s",
+		    "TLS failed: SSL_connect() failed, %d: %s",
 		    SSL_get_error( Server->conn->tls, rc ), SSLerrmessage() );
 	    goto fail;
 	}
 
 	return 0;
 
-  fail:
-    if ( Server->conn->tls )
-    {
-	SSL_shutdown( Server->conn->tls );
-	SSL_free( Server->conn->tls );
-    }
-    return -1;
+fail:
+	if ( Server->conn->tls )
+	{
+		SSL_shutdown( Server->conn->tls );
+		SSL_free( Server->conn->tls );
+	}
+
+	return -1;
 }
 #endif
 
@@ -746,7 +760,17 @@ extern ICD_Struct *Get_Server_conn( char *Username,
 	goto fail;
     }
     
-    
+    /* Enable TLS connection if server_tls set */
+#if HAVE_LIBSSL
+    if ( PC_Struct.server_tls && EnableTLS( &Server ) != 0 )
+    {
+	syslog( LOG_INFO,
+		"LOGIN: '%s' (%s:%s) failed: Unable to enable TLS on IMAP server: %s",
+		Username, ClientAddr, portstr, strerror( errno ) );
+	goto fail;
+    }
+#endif /* HAVE_LIBSSL */
+
     /* Read & throw away the banner line from the server */
     
     if ( IMAP_Line_Read( &Server ) == -1 )
@@ -773,7 +797,7 @@ extern ICD_Struct *Get_Server_conn( char *Username,
      * Do STARTTLS if necessary.
      */
 #if HAVE_LIBSSL
-    if ( PC_Struct.login_disabled || PC_Struct.force_tls )
+    if ( !PC_Struct.server_tls && ( PC_Struct.login_disabled || PC_Struct.force_tls ) )
     {
 	if ( Attempt_STARTTLS( &Server ) != 0 )
 	{
