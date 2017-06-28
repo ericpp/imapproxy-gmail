@@ -100,6 +100,24 @@ extern int BecomeNonRoot( void )
     uid_t newuid;                            /* uid we want to run as */
     gid_t newgid;                            /* gid we want to run as */
     
+    /*
+    * Make sure proc_username is set if we're running as root
+    */
+    if ( getuid() == 0 && PC_Struct.proc_username == NULL )
+    {
+	syslog( LOG_ERR, "%s: proc_username required when running as root.", fn );
+	return(-1);
+    }
+
+    /*
+    * Return if proc_username is not set and we're not root
+    */
+    if ( PC_Struct.proc_username == NULL )
+    {
+	return(0);
+    }
+
+
     if ((pwent = getpwnam( PC_Struct.proc_username )) == NULL)
     {
 	syslog(LOG_WARNING, "%s: getpwnam(%s) failed.", 

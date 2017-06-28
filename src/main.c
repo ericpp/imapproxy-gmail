@@ -834,18 +834,32 @@ static void ServerInit( void )
 	exit( 1 );
     }
 
-    if ( ( pw = getpwnam( PC_Struct.proc_username ) ) == NULL )
+    pw = getpwuid( getuid() );
+
+    if ( pw == NULL )
     {
-	syslog(LOG_ERR, "%s: getpwnam() failed for user '%s' -- Exiting.", fn, 
-	       PC_Struct.proc_username );
+	syslog(LOG_ERR, "%s: getpwuid() failed for current user -- Exiting.", fn );
 	exit( 1 );
     }
+
+    if ( PC_Struct.proc_username )
+    {
+	pw = getpwnam( PC_Struct.proc_username );
+
+	if ( pw == NULL )
+	{
+	    syslog(LOG_ERR, "%s: getpwnam() failed for user '%s' -- Exiting.", fn,
+		PC_Struct.proc_username );
+	    exit( 1 );
+	}
+    }
+
     
     rc = chown( PC_Struct.protocol_log_filename, pw->pw_uid, pw->pw_gid );
     
     if ( rc )
     {
-	syslog(LOG_ERR, "%s: Failed to set ownership of file '%s' to '%s': %s -- Exiting.", fn, PC_Struct.protocol_log_filename, PC_Struct.proc_username, strerror( errno ) );
+	syslog(LOG_ERR, "%s: Failed to set ownership of file '%s' to '%s': %s -- Exiting.", fn, PC_Struct.protocol_log_filename, pw->pw_name, strerror( errno ) );
 	exit( 1 );
     }
     
