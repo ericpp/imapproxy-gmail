@@ -185,6 +185,7 @@
 #define DEFAULT_PID_FILE       "/var/run/imapproxy.pid"
 #endif
 
+#define NON_LITERAL_XOAUTH2     2
 #define LITERAL_PASSWORD        1
 #define NON_LITERAL_PASSWORD    0
 #define UNSELECT_SUPPORTED      1

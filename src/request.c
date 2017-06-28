@@ -181,6 +181,7 @@ static int cmd_noop( ITD_Struct *, char * );
 static int cmd_logout( ITD_Struct *, char * );
 static int cmd_capability( ITD_Struct *, char * );
 static int cmd_authenticate_login( ITD_Struct *, char *, char * );
+static int cmd_authenticate_xoauth2( ITD_Struct *, char *, int, char *, char * );
 static int cmd_login( ITD_Struct *, char *, char *, int, char *, unsigned char, char * );
 static int cmd_trace( ITD_Struct *, char *, char * );
 static int cmd_dumpicc( ITD_Struct *, char * );
@@ -929,8 +930,159 @@ static int cmd_authenticate_login( ITD_Struct *Client,
     return( rc );
 }
 
+/*++
+ * Function:	cmd_authenticate_xoauth2
+ *
+ * Purpose:	implement Gmail's AUTHENTICATE XOAUTH2 mechanism
+ *
+ * Returns:	0 on success prior to authentication
+ *              1 on success after authentication (we caught a logout)
+ *              -1 on failure	
+ *
+ * Authors:	Eric Perrino <ericpp@gmail.com>
+ *
+ * Notes:
+ *--
+ */
+static int cmd_authenticate_xoauth2( ITD_Struct *Client,
+									 char *XOToken,
+									 int  tokenlen,
+									 char *Tag,
+									 char *QueuedPreauthCommand )
+{
+	char *fn = "cmd_authenticate_xoauth2()";
+	char SendBuf[BUFSIZE];
+	char Username[MAXUSERNAMELEN];
+	char DecodedToken[MAXPASSWDLEN];
+	ICD_Struct *conn;
+	ITD_Struct Server;
+	char fullServerResponse[BUFSIZE] = "\0\0\0";
+	int sockaddrlen;
+	char hostaddr[INET6_ADDRSTRLEN], portstr[NI_MAXSERV];
+	unsigned int BufLen = BUFSIZE - 1;
+	memset ( &Server, 0, sizeof Server );
+	sockaddrlen = sizeof( struct sockaddr_storage );
 
+	int tlen = strnlen( XOToken, tokenlen - 2 );
 
+	char* pch = NULL;
+	char* tch = NULL;
+
+	int rc = EVP_DecodeBlock( DecodedToken, XOToken, tlen );
+
+	if ( rc != -1 )
+	{
+		DecodedToken[rc] = '\0';
+
+		pch = strstr( DecodedToken, "user=" );
+		tch = strstr( pch, "\1" );
+	}
+
+	if ( rc == -1 || pch == NULL || tch == NULL ) {
+		snprintf( SendBuf, BufLen, "%s NO AUTHENTICATE failed\r\n", Tag );
+		IMAP_Write( Client->conn, SendBuf, strlen(SendBuf) );
+		syslog( LOG_ERR, "%s: Bad XOAUTH2 token provided by user", fn );
+		return( -1 );
+	}
+
+	pch = pch + 5;
+
+	strncpy( Username, pch, tch - pch );
+
+	/*
+	 * Tell Get_Server_conn() to send the password as a string literal if
+	 * he needs to login.  This is just in case there are any special
+	 * characters in the password that we decoded.
+	 */
+	conn = Get_Server_conn( Username, XOToken, hostaddr, portstr, NON_LITERAL_XOAUTH2, fullServerResponse, QueuedPreauthCommand );
+
+	/*
+	 * all the code from here to the end is basically identical to that
+	 * in cmd_login().
+	 */
+
+	if ( conn == NULL )
+	{
+		// When we get a NO or BAD, we'll relay the original/full
+		// server response to the client in case it contains anything
+		// useful (such as RFC 5530 response codes).  We'll use our
+		// own generic NO response otherwise (RFC 3501 doesn't allow
+		// other responses)
+		//
+		if ( !memcmp( (const void *)fullServerResponse, "NO", 2 )
+		  || !memcmp( (const void *)fullServerResponse, "BAD", 3 ) )
+		{
+			snprintf( SendBuf, BufLen, "%s %s\r\n", Tag, fullServerResponse );
+		}
+		else
+			snprintf( SendBuf, BufLen, "%s NO AUTHENTICATE failed\r\n", Tag );
+
+		if ( IMAP_Write( Client->conn, SendBuf, strlen(SendBuf) ) == -1 )
+		{
+			syslog( LOG_ERR, "%s: Unable to send failure message back to client: %s", fn, strerror( errno ) );
+			return( -1 );
+		}
+
+		return( 0 );
+	}
+
+	Server.conn = conn;
+
+	/*
+	 * If the connection has been reused, send a status response indicating
+	 * this.
+	 */
+	if (Server.conn->reused == 1)
+	{
+		sprintf( SendBuf, "* OK [XPROXYREUSE] IMAP connection reused by squirrelmail-imap_proxy\r\n" );
+		if ( IMAP_Write( Client->conn, SendBuf, strlen(SendBuf) ) == -1 )
+		{
+			syslog(LOG_ERR, "%s: IMAP_Write() failed: %s", fn, strerror(errno) );
+			return( -1 );
+		}
+	}
+
+	// TODO: under what circumstances do we want to pass through the server's full OK response? (usually a CAPABILITY string)
+	//if ( !memcmp( (const void *)fullServerResponse, "OK", 2 ) )
+	snprintf( SendBuf, BufLen, "%s OK User authenticated\r\n", Tag );
+
+	if ( IMAP_Write( Client->conn, SendBuf, strlen( SendBuf ) ) == -1 )
+	{
+		IMAPCount->InUseServerConnections--;
+		ICC_Invalidate(Server.conn->ICC);
+		syslog( LOG_ERR, "%s: Unable to send successful authentication message back to client: %s -- closing connection.", fn, strerror( errno ) );
+		return( -1 );
+	}
+
+	IMAPCount->TotalClientLogins++;
+
+	LockMutex ( &trace );
+	if ( ! strcmp( Username, TraceUser ) )
+	{
+		Client->TraceOn = 1;
+		Server.TraceOn = 1;
+	}
+	else
+	{
+		Client->TraceOn = 0;
+		Server.TraceOn = 0;
+	}
+	UnLockMutex( &trace );
+
+	rc = Raw_Proxy( Client, &Server, &Server.conn->ISC );
+
+	if (rc == -2) {
+		ICC_Invalidate( Server.conn->ICC );
+		return ( -1 );
+	}
+
+	Client->TraceOn = 0;
+	Server.TraceOn = 0;
+
+	ICC_Logout( Server.conn->ICC );
+
+	return( rc );
+}
 
 /*++
  * Function:	cmd_login
@@ -1601,6 +1753,7 @@ extern void HandleRequest( int clientsd )
     char *Tag;
     char *Command;
     char *Username;
+    char *XOToken;
     char *AuthMech;
     char *Lasts;
     char *EndOfLine;
@@ -1613,6 +1766,7 @@ extern void HandleRequest( int clientsd )
     char S_UserName[MAXUSERNAMELEN];
     char S_Tag[MAXTAGLEN];
     char S_Password[MAXPASSWDLEN];
+    char S_XOToken[MAXPASSWDLEN];
     unsigned char LiteralFlag;          /* flag to deal with passwords sent */
 					/* as string literals */
     
@@ -1858,6 +2012,47 @@ extern void HandleRequest( int clientsd )
 		close( Client.conn->sd );
 		return;
 	    }
+		else if ( !strcasecmp( (const char *)AuthMech, "XOAUTH2" ) )
+		{
+			XOToken = memtok( NULL, EndOfLine, &Lasts );
+			if ( !XOToken )
+			{
+				snprintf( SendBuf, BufLen, "%s BAD Missing required argument to XOAUTH2\r\n", Tag );
+				if ( IMAP_Write( Client.conn, SendBuf, strlen(SendBuf) ) == -1 )
+				{
+					IMAPCount->CurrentClientConnections--;
+					close( Client.conn->sd );
+					return;
+				}
+				continue;
+			}
+
+			strncpy( S_XOToken, XOToken, sizeof S_XOToken - 1 );
+			S_XOToken[ sizeof S_XOToken - 1 ] = '\0';
+
+			rc = cmd_authenticate_xoauth2( &Client, S_XOToken, sizeof S_XOToken, S_Tag, S_QueuedPreauthCommand );
+
+			if ( rc == 0 )
+			{
+				continue;
+			}
+
+			if ( rc == 1 )
+			{
+				/* caught a logout */
+				Tag = memtok( Client.ReadBuf, EndOfLine, &Lasts );
+				if ( Tag )
+				{
+					strncpy( S_Tag, Tag, MAXTAGLEN - 1 );
+					S_Tag[ MAXTAGLEN - 1 ] = '\0';
+					cmd_logout( &Client, S_Tag );
+				}
+			}
+
+			IMAPCount->CurrentClientConnections--;
+			close( Client.conn->sd );
+			return;
+		}
 	    else if ( !strcasecmp( (const char *)AuthMech, "PLAIN" ) )
 	    {
 		/*

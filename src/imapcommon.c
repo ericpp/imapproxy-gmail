@@ -1020,13 +1020,28 @@ extern ICD_Struct *Get_Server_conn( char *Username,
 	}
     }
 
+	/**
+	* Send off the AUTHENTICATE XOAUTH2 command with the user's token to the IMAP server.
+	*/
+	else if ( LiteralPasswd == NON_LITERAL_XOAUTH2 )
+	{
+		snprintf( SendBuf, BufLen, "A0001 AUTHENTICATE XOAUTH2 %s\r\n", Password, strlen( Password ) );
+
+		if ( IMAP_Write( Server.conn, SendBuf, strlen(SendBuf) ) == -1 )
+		{
+			syslog( LOG_INFO,
+				"LOGIN: '%s' (%s:%s) failed: IMAP_Write() failed attempting to send AUTHENTICATE XOAUTH2 command to IMAP server: %s",
+				Username, ClientAddr, portstr, strerror( errno ) );
+			goto fail;
+		}
+	}
 
     /*
      * Otherwise, send a normal login command off to the IMAP server.
      *
      * ... but login command has to treat literal passwords differently:
      */
-    else if ( LiteralPasswd )
+    else if ( LiteralPasswd == LITERAL_PASSWORD )
     {
 	snprintf( SendBuf, BufLen, "A0001 LOGIN %s {%d}\r\n", 
 		  Username, strlen( Password ) );
